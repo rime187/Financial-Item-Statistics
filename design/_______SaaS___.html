@@ -1,0 +1,309 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回款与账龄 — 项目财务统计与管控中台</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config" data-stitch-original-src="6a281a90170c0680===../../design-systems/saas-executive/tailwind.config.js">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'canvas-slate': '#F8FAFC',
+        'card-white': '#FFFFFF',
+        'border-slate': '#E2E8F0',
+        'pill-track': '#F1F5F9',
+        'ink-primary': '#0F172A',
+        'ink-secondary': '#475569',
+        'ink-muted': '#64748B',
+        'cobalt-blue': '#2563EB',
+        'cobalt-blue-hover': '#1D4ED8',
+        'cobalt-soft': '#EFF6FF',
+        'cobalt-text': '#1D4ED8',
+        'bright-blue': '#3B82F6',
+        'emerald-green': '#10B981',
+        'emerald-soft': '#ECFDF5',
+        'emerald-text': '#047857',
+        'soft-indigo': '#6366F1',
+        'indigo-soft': '#EEF2FF',
+        'indigo-text': '#4338CA',
+        'warm-amber': '#F59E0B',
+        'amber-soft': '#FFFBEB',
+        'amber-text': '#B45309',
+        'coral-red': '#EF4444',
+        'coral-soft': '#FEF2F2',
+        'coral-text': '#B91C1C',
+        'baseline-gray': '#CBD5E1',
+        'navy-bar': '#1E293B',
+        'slate-bar': '#94A3B8',
+        'light-primary': '#2563EB',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-surface-container': '#FFFFFF',
+        'light-on-surface': '#0F172A',
+        'light-on-surface-variant': '#64748B',
+        'light-outline': '#E2E8F0',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'lg': '12px',
+        '2xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'section': '24px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'title': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.75px', fontWeight: '700' }],
+        'display-lg-mobile': ['26px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'title-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.15px', fontWeight: '600' }],
+        'title-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-md': ['13px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }
+    body { font-family: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="bg-canvas-slate text-ink-primary font-body min-h-screen">
+  <div class="min-h-screen w-full bg-canvas-slate py-section px-page-margin">
+    <div class="max-w-[1280px] mx-auto flex flex-col gap-gutter-xl">
+
+      <!-- Top Brand & Action Header -->
+      <header class="flex flex-wrap items-center justify-between gap-gutter-lg">
+        <div class="flex items-center gap-gutter-md">
+          <div class="w-11 h-11 rounded-lg bg-ink-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[22px] text-card-white" style="font-variation-settings: &#39;FILL&#39; 1;">bar_chart</span>
+          </div>
+          <div class="flex flex-col gap-0.5">
+            <div class="flex flex-wrap items-center gap-gutter-sm">
+              <h1 data-design-text-token="headline-md" class="font-headline text-headline-md text-ink-primary whitespace-nowrap">项目财务统计与管控中台</h1>
+              <span data-design-text-token="label-sm" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cobalt-soft text-cobalt-text font-label text-label-sm whitespace-nowrap">2026 财年实时台账</span>
+            </div>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">预算执行监控 · 业财毛利核算 · 应收账龄预警 · EAC完工预测</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button type="button" class="inline-flex items-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">notifications_active</span>
+            <span data-design-text-token="label-sm">批量催款提醒</span>
+          </button>
+          <button type="button" class="inline-flex items-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">download</span>
+            <span data-design-text-token="label-sm">导出账龄表</span>
+          </button>
+          <button type="button" class="inline-flex items-center gap-1 px-gutter-lg py-gutter-sm rounded bg-cobalt-blue text-light-on-primary shadow-2xs font-label text-label-sm hover:bg-cobalt-blue-hover transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>
+            <span data-design-text-token="label-sm">登记回款</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Top Pill Navigation ("回款与账龄" Active) -->
+      <div class="flex flex-wrap items-center justify-between gap-gutter-md">
+        <nav aria-label="视图切换" class="inline-flex items-center p-1 rounded-full bg-pill-track border border-border-slate">
+          <a href="../executive-cockpit/ExecutiveCockpit.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">驾驶舱总览</span>
+          </a>
+          <a href="../project-financial-ledger/ProjectFinancialLedger.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">项目财务台账</span>
+          </a>
+          <a href="#" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full bg-ink-primary text-card-white font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">account_balance_wallet</span>
+            <span data-design-text-token="label-sm">回款与账龄</span>
+          </a>
+          <a href="../eac-sandbox/EacSandbox.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">EAC测算沙盘</span>
+          </a>
+        </nav>
+
+        <div class="flex flex-wrap items-center gap-gutter-sm">
+          <select aria-label="业务组筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option>全部业务组</option>
+            <option>智慧能源组</option>
+            <option>工业装备组</option>
+            <option>自动化集成组</option>
+          </select>
+          <select aria-label="账龄区间筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option>全部账龄区间</option>
+            <option>30天以内 (正常)</option>
+            <option>31-60天 (关注)</option>
+            <option>60天以上 (逾期)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 4 Receivables KPI Cards -->
+      <section aria-label="回款核心指标" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter-lg items-stretch">
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">累计已开票金额</span>
+            <div class="w-9 h-9 rounded-lg bg-cobalt-soft text-cobalt-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">receipt</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-ink-primary tabular-nums">¥1,322万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">占合同总额 66.4%</span>
+          </div>
+        </article>
+
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">累计实际回款</span>
+            <div class="w-9 h-9 rounded-lg bg-emerald-soft text-emerald-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">payments</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-emerald-text tabular-nums">¥1,069万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">开票回款率 80.9%</span>
+          </div>
+        </article>
+
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">开票未回应收余额</span>
+            <div class="w-9 h-9 rounded-lg bg-amber-soft text-amber-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">hourglass_top</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-amber-text tabular-nums">¥253万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">涉及 4 个在建/初验项目</span>
+          </div>
+        </article>
+
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">&gt;60天逾期应收</span>
+            <div class="w-9 h-9 rounded-lg bg-coral-soft text-coral-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">event_busy</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-coral-text tabular-nums">¥150万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">需法务/商务联动催收</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Aging Buckets + Receivables Table -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-stretch">
+        <!-- Left (4/12): Aging Structure Chart -->
+        <article class="lg:col-span-4 bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col justify-between gap-gutter-lg">
+          <header class="flex flex-col gap-1">
+            <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">应收账款账龄分布</h2>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">开票未回余额 ¥253.0万 按逾期天数分段</p>
+          </header>
+
+          <div class="flex flex-col gap-gutter-md my-auto">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between font-label text-label-sm tabular-nums"><span class="text-ink-secondary">0 - 30 天 (账期内)</span><span class="text-ink-primary">¥ 48.0万 (19.0%)</span></div>
+              <div class="w-full h-2.5 rounded-full bg-pill-track overflow-hidden"><div class="h-2.5 rounded-full bg-emerald-green" style="width: 19%;"></div></div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between font-label text-label-sm tabular-nums"><span class="text-ink-secondary">31 - 60 天 (临期预警)</span><span class="text-ink-primary">¥ 55.0万 (21.7%)</span></div>
+              <div class="w-full h-2.5 rounded-full bg-pill-track overflow-hidden"><div class="h-2.5 rounded-full bg-warm-amber" style="width: 21.7%;"></div></div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between font-label text-label-sm tabular-nums"><span class="text-coral-text">61 - 90 天 (轻度逾期)</span><span class="text-coral-text">¥ 98.0万 (38.7%)</span></div>
+              <div class="w-full h-2.5 rounded-full bg-pill-track overflow-hidden"><div class="h-2.5 rounded-full bg-coral-red" style="width: 38.7%;"></div></div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between font-label text-label-sm tabular-nums"><span class="text-coral-text">90 天以上 (高危逾期)</span><span class="text-coral-text">¥ 52.0万 (20.6%)</span></div>
+              <div class="w-full h-2.5 rounded-full bg-pill-track overflow-hidden"><div class="h-2.5 rounded-full bg-coral-text" style="width: 20.6%;"></div></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Right (8/12): Receivables & Milestones Table -->
+        <article class="lg:col-span-8 bg-card-white border border-border-slate rounded-2xl shadow-sm overflow-hidden flex flex-col">
+          <header class="px-section py-gutter-lg border-b border-border-slate flex items-center justify-between">
+            <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">重点应收节点与账龄台账</h2>
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-muted">按逾期天数降序</span>
+          </header>
+          <div class="w-full overflow-x-auto">
+            <table class="w-full border-collapse text-left">
+              <thead class="bg-canvas-slate border-b border-border-slate">
+                <tr>
+                  <th class="px-gutter-lg py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">项目与客户</th>
+                  <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">收款节点</th>
+                  <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">应收余额 (万)</th>
+                  <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">账龄</th>
+                  <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">状态</th>
+                  <th class="px-gutter-lg py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border-slate">
+                <tr class="h-14 hover:bg-canvas-slate">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap"><div class="flex flex-col"><span class="font-title text-title-md text-ink-primary">滨海新区智能立体库二期</span><span class="font-body text-body-sm text-ink-muted">滨海冷链港务集团</span></div></td>
+                  <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">上线初验款 (40%)</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-coral-text tabular-nums whitespace-nowrap">150.0</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-label text-label-sm text-coral-text tabular-nums whitespace-nowrap">68 天</td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-coral-soft text-coral-text font-label text-label-sm">逾期催收</span></td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><a href="#" class="font-label text-label-sm text-cobalt-text hover:underline">发起催款 →</a></td>
+                </tr>
+                <tr class="h-14 hover:bg-canvas-slate">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap"><div class="flex flex-col"><span class="font-title text-title-md text-ink-primary">智慧园区能耗碳排监测大屏</span><span class="font-body text-body-sm text-ink-muted">高新园区管委会</span></div></td>
+                  <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">到货验收款 (30%)</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">48.0</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-label text-label-sm text-amber-text tabular-nums whitespace-nowrap">42 天</td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-amber-soft text-amber-text font-label text-label-sm">临期跟进</span></td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><a href="#" class="font-label text-label-sm text-cobalt-text hover:underline">核销登记 →</a></td>
+                </tr>
+                <tr class="h-14 hover:bg-canvas-slate">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap"><div class="flex flex-col"><span class="font-title text-title-md text-ink-primary">华东热能系统改造项目</span><span class="font-body text-body-sm text-ink-muted">华东能源科技集团</span></div></td>
+                  <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">调试进度款 (20%)</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">35.0</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-label text-label-sm text-ink-secondary tabular-nums whitespace-nowrap">19 天</td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">账期内</span></td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><a href="#" class="font-label text-label-sm text-cobalt-text hover:underline">查看发票 →</a></td>
+                </tr>
+                <tr class="h-14 hover:bg-canvas-slate">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap"><div class="flex flex-col"><span class="font-title text-title-md text-ink-primary">宁波自动化港口AGV调度</span><span class="font-body text-body-sm text-ink-muted">宁波港务物流公司</span></div></td>
+                  <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">质保金 (5%)</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">20.0</td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-label text-label-sm text-ink-secondary tabular-nums whitespace-nowrap">12 天</td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">账期内</span></td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><a href="#" class="font-label text-label-sm text-cobalt-text hover:underline">查看发票 →</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+
+</body></html>

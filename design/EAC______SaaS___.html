@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EAC测算沙盘 — 项目财务统计与管控中台</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config" data-stitch-original-src="6a281a90170c0680===../../design-systems/saas-executive/tailwind.config.js">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'canvas-slate': '#F8FAFC',
+        'card-white': '#FFFFFF',
+        'border-slate': '#E2E8F0',
+        'pill-track': '#F1F5F9',
+        'ink-primary': '#0F172A',
+        'ink-secondary': '#475569',
+        'ink-muted': '#64748B',
+        'cobalt-blue': '#2563EB',
+        'cobalt-blue-hover': '#1D4ED8',
+        'cobalt-soft': '#EFF6FF',
+        'cobalt-text': '#1D4ED8',
+        'bright-blue': '#3B82F6',
+        'emerald-green': '#10B981',
+        'emerald-soft': '#ECFDF5',
+        'emerald-text': '#047857',
+        'soft-indigo': '#6366F1',
+        'indigo-soft': '#EEF2FF',
+        'indigo-text': '#4338CA',
+        'warm-amber': '#F59E0B',
+        'amber-soft': '#FFFBEB',
+        'amber-text': '#B45309',
+        'coral-red': '#EF4444',
+        'coral-soft': '#FEF2F2',
+        'coral-text': '#B91C1C',
+        'baseline-gray': '#CBD5E1',
+        'navy-bar': '#1E293B',
+        'slate-bar': '#94A3B8',
+        'light-primary': '#2563EB',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-surface-container': '#FFFFFF',
+        'light-on-surface': '#0F172A',
+        'light-on-surface-variant': '#64748B',
+        'light-outline': '#E2E8F0',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'lg': '12px',
+        '2xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'section': '24px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'title': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.75px', fontWeight: '700' }],
+        'display-lg-mobile': ['26px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'title-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.15px', fontWeight: '600' }],
+        'title-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-md': ['13px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }
+    body { font-family: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="bg-canvas-slate text-ink-primary font-body min-h-screen">
+  <div class="min-h-screen w-full bg-canvas-slate py-section px-page-margin">
+    <div class="max-w-[1280px] mx-auto flex flex-col gap-gutter-xl">
+
+      <!-- Top Brand & Action Header -->
+      <header class="flex flex-wrap items-center justify-between gap-gutter-lg">
+        <div class="flex items-center gap-gutter-md">
+          <div class="w-11 h-11 rounded-lg bg-ink-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[22px] text-card-white" style="font-variation-settings: &#39;FILL&#39; 1;">bar_chart</span>
+          </div>
+          <div class="flex flex-col gap-0.5">
+            <div class="flex flex-wrap items-center gap-gutter-sm">
+              <h1 data-design-text-token="headline-md" class="font-headline text-headline-md text-ink-primary whitespace-nowrap">项目财务统计与管控中台</h1>
+              <span data-design-text-token="label-sm" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cobalt-soft text-cobalt-text font-label text-label-sm whitespace-nowrap">2026 财年实时台账</span>
+            </div>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">预算执行监控 · 业财毛利核算 · 应收账龄预警 · EAC完工预测</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button type="button" class="inline-flex items-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">restart_alt</span>
+            <span data-design-text-token="label-sm">恢复基准参数</span>
+          </button>
+          <button type="button" class="inline-flex items-center gap-1 px-gutter-lg py-gutter-sm rounded bg-cobalt-blue text-light-on-primary shadow-2xs font-label text-label-sm hover:bg-cobalt-blue-hover transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">save</span>
+            <span data-design-text-token="label-sm">保存EAC预测基线</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Top Pill Navigation ("EAC测算沙盘" Active) -->
+      <div class="flex flex-wrap items-center justify-between gap-gutter-md">
+        <nav aria-label="视图切换" class="inline-flex items-center p-1 rounded-full bg-pill-track border border-border-slate">
+          <a href="../executive-cockpit/ExecutiveCockpit.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">驾驶舱总览</span>
+          </a>
+          <a href="../project-financial-ledger/ProjectFinancialLedger.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">项目财务台账</span>
+          </a>
+          <a href="../receivables-aging/ReceivablesAging.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">回款与账龄</span>
+          </a>
+          <a href="#" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full bg-ink-primary text-card-white font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">science</span>
+            <span data-design-text-token="label-sm">EAC测算沙盘</span>
+          </a>
+        </nav>
+
+        <select aria-label="选择测算项目" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+          <option>PRJ-2026-018 · 华东热能系统改造项目</option>
+          <option>PRJ-2026-001 · 智慧园区能耗碳排监测大屏</option>
+          <option>PRJ-2026-009 · 滨海新区智能立体库二期</option>
+        </select>
+      </div>
+
+      <!-- 4 EAC Summary Cards -->
+      <section aria-label="EAC预测指标" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter-lg items-stretch">
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">核定完工预算 (BAC)</span>
+            <div class="w-9 h-9 rounded-lg bg-pill-track text-ink-secondary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">flag</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-ink-primary tabular-nums">¥220.0万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">合同额 ¥340.0万 · 目标毛利 35.3%</span>
+          </div>
+        </article>
+
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">动态完工估算 (EAC)</span>
+            <div class="w-9 h-9 rounded-lg bg-coral-soft text-coral-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">trending_up</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p id="eac-value" data-design-text-token="display-lg" class="font-display text-display-lg text-coral-text tabular-nums">¥248.6万</p>
+            <span id="eac-diff" data-design-text-token="body-sm" class="font-body text-body-sm text-coral-text tabular-nums">预计完工超支 +¥28.6万 (+13.0%)</span>
+          </div>
+        </article>
+
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">预计尚需成本 (ETC)</span>
+            <div class="w-9 h-9 rounded-lg bg-indigo-soft text-indigo-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">calculate</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p id="etc-value" data-design-text-token="display-lg" class="font-display text-display-lg text-ink-primary tabular-nums">¥46.2万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">剩余工期 45 天 · 日均燃耗 ¥1.03万</span>
+          </div>
+        </article>
+
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-2">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">预测完工毛利率</span>
+            <div class="w-9 h-9 rounded-lg bg-amber-soft text-amber-text flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px]">percent</span></div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p id="eac-margin" data-design-text-token="display-lg" class="font-display text-display-lg text-amber-text tabular-nums">26.9%</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">较立项目标 35.3% 下降 8.4pp</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Interactive Sandbox Split: Parameter Sliders (Left) + EAC Curve (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-stretch">
+        <!-- Left (5/12): Interactive Parameter Controls -->
+        <article class="lg:col-span-5 bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col gap-gutter-lg">
+          <header class="flex flex-col gap-1">
+            <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">沙盘推演参数调节</h2>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">拖动滑块实时测算人工效率、外协溢价与变更签证对完工毛利的影响</p>
+          </header>
+
+          <div class="flex flex-col gap-gutter-lg">
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between font-label text-label-sm">
+                <span class="text-ink-primary">剩余工期投入人工天数</span>
+                <span id="lbl-days" class="text-cobalt-text tabular-nums">120 人天</span>
+              </div>
+              <input id="slider-days" type="range" min="60" max="200" value="120" class="w-full accent-cobalt-blue">
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between font-label text-label-sm">
+                <span class="text-ink-primary">外协采购价格浮动率</span>
+                <span id="lbl-sub" class="text-coral-text tabular-nums">+12%</span>
+              </div>
+              <input id="slider-sub" type="range" min="-10" max="30" value="12" class="w-full accent-cobalt-blue">
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between font-label text-label-sm">
+                <span class="text-ink-primary">客户变更签证预计增收</span>
+                <span id="lbl-change" class="text-emerald-text tabular-nums">¥ 0.0万</span>
+              </div>
+              <input id="slider-change" type="range" min="0" max="60" value="0" class="w-full accent-cobalt-blue">
+            </div>
+          </div>
+
+          <div class="p-gutter-md rounded-lg bg-cobalt-soft border border-border-slate flex flex-col gap-1 mt-auto">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text">测算诊断建议</span>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary">若能锁定二期外协单价并推动客户签署 ¥18万 变更签证，完工毛利率可回升至 30.6%。</p>
+          </div>
+        </article>
+
+        <!-- Right (7/12): EAC Burn-up Comparison Chart -->
+        <article class="lg:col-span-7 bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col justify-between gap-gutter-lg">
+          <header class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-col gap-1">
+              <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">累计成本燃尽与 EAC 完工预测曲线</h2>
+              <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">对比基准预算曲线 (BAC)、实际已发生成本 (AC) 与动态预测轨迹 (EAC)</p>
+            </div>
+          </header>
+
+          <div class="flex flex-wrap items-center gap-gutter-lg">
+            <div class="flex items-center gap-1.5"><span class="w-3.5 h-0.5 bg-baseline-gray"></span><span class="font-label text-label-sm text-ink-secondary">核定预算基线 (BAC)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3.5 h-0.5 bg-cobalt-blue"></span><span class="font-label text-label-sm text-ink-secondary">实际累计发生 (AC)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3.5 h-0.5 bg-coral-red"></span><span class="font-label text-label-sm text-ink-secondary">动态完工预测 (EAC)</span></div>
+          </div>
+
+          <div class="w-full">
+            <svg viewBox="0 0 640 240" class="w-full h-auto overflow-visible" role="img" aria-label="EAC完工预测曲线图">
+              <g class="tabular-nums" font-family="Inter, PingFang SC, sans-serif" font-size="11" fill="#64748B">
+                <line x1="40" y1="20" x2="610" y2="20" stroke="#F1F5F9" stroke-width="1"></line><text x="34" y="24" text-anchor="end">280</text>
+                <line x1="40" y1="65" x2="610" y2="65" stroke="#F1F5F9" stroke-width="1"></line><text x="34" y="69" text-anchor="end">210</text>
+                <line x1="40" y1="110" x2="610" y2="110" stroke="#F1F5F9" stroke-width="1"></line><text x="34" y="114" text-anchor="end">140</text>
+                <line x1="40" y1="155" x2="610" y2="155" stroke="#F1F5F9" stroke-width="1"></line><text x="34" y="159" text-anchor="end">70</text>
+                <line x1="40" y1="200" x2="610" y2="200" stroke="#E2E8F0" stroke-width="1"></line><text x="34" y="204" text-anchor="end">0</text>
+                <text x="60" y="220" text-anchor="middle">7月</text>
+                <text x="150" y="220" text-anchor="middle">8月</text>
+                <text x="240" y="220" text-anchor="middle">9月</text>
+                <text x="330" y="220" text-anchor="middle">10月</text>
+                <text x="420" y="220" text-anchor="middle">11月(当前)</text>
+                <text x="510" y="220" text-anchor="middle">12月(预测)</text>
+                <text x="600" y="220" text-anchor="middle">1月(完工)</text>
+              </g>
+              <!-- BAC Baseline -->
+              <polyline fill="none" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5 4" points="60,185 150,155 240,125 330,98 420,80 510,68 600,58"></polyline>
+              <!-- Actual Cost up to Nov -->
+              <polyline fill="none" stroke="#2563EB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="60,182 150,148 240,115 330,86 420,69"></polyline>
+              <!-- EAC Forecast from Nov to Jan -->
+              <polyline fill="none" stroke="#EF4444" stroke-width="3" stroke-dasharray="6 4" stroke-linecap="round" points="420,69 510,50 600,40"></polyline>
+              <circle cx="420" cy="69" r="4.5" fill="#FFFFFF" stroke="#2563EB" stroke-width="2.5"></circle>
+              <circle cx="600" cy="40" r="4.5" fill="#FFFFFF" stroke="#EF4444" stroke-width="2.5"></circle>
+            </svg>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const sDays = document.getElementById('slider-days');
+      const sSub = document.getElementById('slider-sub');
+      const sChange = document.getElementById('slider-change');
+      const lDays = document.getElementById('lbl-days');
+      const lSub = document.getElementById('lbl-sub');
+      const lChange = document.getElementById('lbl-change');
+      const eacVal = document.getElementById('eac-value');
+      const etcVal = document.getElementById('etc-value');
+      const eacMargin = document.getElementById('eac-margin');
+
+      function recalc() {
+        const days = parseInt(sDays.value, 10);
+        const sub = parseInt(sSub.value, 10);
+        const chg = parseInt(sChange.value, 10);
+        lDays.textContent = days + ' 人天';
+        lSub.textContent = (sub >= 0 ? '+' : '') + sub + '%';
+        lChange.textContent = '¥ ' + chg.toFixed(1) + '万';
+
+        const etc = 24 + days * 0.14 + sub * 0.45;
+        const eac = 202.4 + etc;
+        const rev = 340 + chg;
+        const margin = ((rev - eac) / rev) * 100;
+        etcVal.textContent = '¥' + etc.toFixed(1) + '万';
+        eacVal.textContent = '¥' + eac.toFixed(1) + '万';
+        eacMargin.textContent = margin.toFixed(1) + '%';
+      }
+
+      [sDays, sSub, sChange].forEach(function (el) {
+        if (el) el.addEventListener('input', recalc);
+      });
+    })();
+  </script>
+
+
+</body></html>

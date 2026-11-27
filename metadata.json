@@ -1,0 +1,6 @@
+{
+  "name": "部门项目财务统计与管控中台",
+  "description": "面向企业财务与项目交付管理的一体化中台：预算执行监控、业财毛利核算、应收账龄预警与 EAC 完工预测。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

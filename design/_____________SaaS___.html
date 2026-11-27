@@ -1,0 +1,623 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目财务统计与管控中台 — 驾驶舱总览</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config" data-stitch-original-src="6a281a90170c0680===../../design-systems/saas-executive/tailwind.config.js">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'canvas-slate': '#F8FAFC',
+        'card-white': '#FFFFFF',
+        'border-slate': '#E2E8F0',
+        'pill-track': '#F1F5F9',
+        'ink-primary': '#0F172A',
+        'ink-secondary': '#475569',
+        'ink-muted': '#64748B',
+        'cobalt-blue': '#2563EB',
+        'cobalt-blue-hover': '#1D4ED8',
+        'cobalt-soft': '#EFF6FF',
+        'cobalt-text': '#1D4ED8',
+        'bright-blue': '#3B82F6',
+        'emerald-green': '#10B981',
+        'emerald-soft': '#ECFDF5',
+        'emerald-text': '#047857',
+        'soft-indigo': '#6366F1',
+        'indigo-soft': '#EEF2FF',
+        'indigo-text': '#4338CA',
+        'warm-amber': '#F59E0B',
+        'amber-soft': '#FFFBEB',
+        'amber-text': '#B45309',
+        'coral-red': '#EF4444',
+        'coral-soft': '#FEF2F2',
+        'coral-text': '#B91C1C',
+        'baseline-gray': '#CBD5E1',
+        'navy-bar': '#1E293B',
+        'slate-bar': '#94A3B8',
+        'light-primary': '#2563EB',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-surface-container': '#FFFFFF',
+        'light-on-surface': '#0F172A',
+        'light-on-surface-variant': '#64748B',
+        'light-outline': '#E2E8F0',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'lg': '12px',
+        '2xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'section': '24px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'title': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.75px', fontWeight: '700' }],
+        'display-lg-mobile': ['26px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'title-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.15px', fontWeight: '600' }],
+        'title-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-md': ['13px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      line-height: 1 !important;
+      box-sizing: content-box;
+      overflow: hidden;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+    }
+    body {
+      font-family: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-canvas-slate text-ink-primary font-body min-h-screen">
+  <div class="min-h-screen w-full bg-canvas-slate py-section px-page-margin">
+    <div class="max-w-[1280px] mx-auto flex flex-col gap-gutter-xl">
+
+      <!-- Section 1: Top Brand & Action Header -->
+      <header class="flex flex-wrap items-center justify-between gap-gutter-lg">
+        <!-- Left: Logo + Title + Pill + Subtitle -->
+        <div class="flex items-center gap-gutter-md">
+          <div class="w-11 h-11 rounded-lg bg-ink-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[22px] text-card-white" style="font-variation-settings: &#39;FILL&#39; 1;">bar_chart</span>
+          </div>
+          <div class="flex flex-col gap-0.5">
+            <div class="flex flex-wrap items-center gap-gutter-sm">
+              <h1 data-design-text-token="headline-md" class="font-headline text-headline-md text-ink-primary whitespace-nowrap">项目财务统计与管控中台</h1>
+              <span data-design-text-token="label-sm" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cobalt-soft text-cobalt-text font-label text-label-sm whitespace-nowrap">2026 财年实时台账</span>
+            </div>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">预算执行监控 · 业财毛利核算 · 应收账龄预警 · EAC完工预测</p>
+          </div>
+        </div>
+
+        <!-- Right: 3 Outline Buttons + 1 Solid Cobalt Primary CTA -->
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">description</span>
+            <span data-design-text-token="label-sm">模板下载</span>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">upload</span>
+            <span data-design-text-token="label-sm">导入CSV</span>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">download</span>
+            <span data-design-text-token="label-sm">导出报表</span>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1 px-gutter-lg py-gutter-sm rounded bg-cobalt-blue text-light-on-primary shadow-2xs font-label text-label-sm hover:bg-cobalt-blue-hover transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>
+            <span data-design-text-token="label-sm">新增项目</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Section 2: Top Pill Navigation & Filter Toolbar -->
+      <div class="flex flex-wrap items-center justify-between gap-gutter-md">
+        <!-- Left: Segmented Pill Navigation -->
+        <nav aria-label="视图切换" class="inline-flex items-center p-1 rounded-full bg-pill-track border border-border-slate">
+          <button type="button" data-tab="cockpit" class="nav-pill inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full bg-ink-primary text-card-white font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">grid_view</span>
+            <span data-design-text-token="label-sm">驾驶舱总览</span>
+          </button>
+          <button type="button" data-tab="ledger" class="nav-pill inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">项目财务台账</span>
+          </button>
+          <button type="button" data-tab="receivables" class="nav-pill inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">回款与账龄</span>
+          </button>
+          <button type="button" data-tab="eac" class="nav-pill inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">EAC测算沙盘</span>
+          </button>
+        </nav>
+
+        <!-- Right: 3 Compact Dropdowns + Reset Link -->
+        <div class="flex flex-wrap items-center gap-gutter-sm">
+          <select id="filter-group" aria-label="业务组筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部业务组</option>
+            <option value="energy">智慧能源组</option>
+            <option value="equip">工业装备组</option>
+            <option value="auto">自动化集成组</option>
+          </select>
+          <select id="filter-stage" aria-label="阶段筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部阶段</option>
+            <option value="exec">执行交付中</option>
+            <option value="accept">初验待结算</option>
+            <option value="closed">已完工归档</option>
+          </select>
+          <select id="filter-health" aria-label="健康状态筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部健康状态</option>
+            <option value="healthy">健康可控</option>
+            <option value="warn">接近红线</option>
+            <option value="alert">预算/回款异常</option>
+          </select>
+          <button id="reset-filters" type="button" class="px-gutter-sm py-1.5 font-label text-label-sm text-ink-muted hover:text-cobalt-text transition-colors duration-state-change whitespace-nowrap">
+            <span data-design-text-token="label-sm">重置筛选</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 3: 5 Executive KPI Summary Cards -->
+      <section aria-label="核心经营指标" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-gutter-lg items-stretch">
+        <!-- KPI 1 -->
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-gutter-sm">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">立项合同总额</span>
+            <div class="w-9 h-9 rounded-lg bg-cobalt-soft text-cobalt-text flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[18px]">contract</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-ink-primary tabular-nums tracking-tight">¥1,990万</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">覆盖 8 个项目 · 已开票 66.4%</span>
+          </div>
+        </article>
+
+        <!-- KPI 2 -->
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-gutter-sm">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary truncate min-w-0">预算消耗率 (总成本/总预算)</span>
+            <div class="w-9 h-9 rounded-lg bg-indigo-soft text-indigo-text flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[18px]">pie_chart</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-gutter-sm">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-ink-primary tabular-nums tracking-tight">81.5%</p>
+            <div class="w-full h-1.5 rounded-full bg-pill-track overflow-hidden">
+              <div class="h-1.5 rounded-full bg-soft-indigo" style="width: 81.5%;"></div>
+            </div>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">已发生 ¥1,058万 / 预算 ¥1,298万</span>
+          </div>
+        </article>
+
+        <!-- KPI 3 -->
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-gutter-sm">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">确认收入核算毛利率</span>
+            <div class="w-9 h-9 rounded-lg bg-emerald-soft text-emerald-text flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[18px]">trending_up</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-amber-text tabular-nums tracking-tight">24.3%</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">核算毛利额 ¥339.2万 (目标 ≥32%)</span>
+          </div>
+        </article>
+
+        <!-- KPI 4 -->
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-gutter-sm">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary truncate min-w-0">累计回款率 &amp; 应收未收</span>
+            <div class="w-9 h-9 rounded-lg bg-amber-soft text-amber-text flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[18px]">payments</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-ink-primary tabular-nums tracking-tight">53.7%</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">已回 ¥1,069万 · 开票未回 ¥253万</span>
+          </div>
+        </article>
+
+        <!-- KPI 5 -->
+        <article class="h-full bg-card-white border border-border-slate rounded-2xl p-gutter-xl shadow-sm flex flex-col justify-between gap-gutter-md">
+          <div class="flex items-start justify-between gap-gutter-sm">
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">财务异常预警项目</span>
+            <div class="w-9 h-9 rounded-lg bg-coral-soft text-coral-text flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[18px]">warning</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <p data-design-text-token="display-lg" class="font-display text-display-lg text-coral-text tabular-nums tracking-tight">4 个</p>
+            <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">超支 3 个 · &gt;60天逾期应收 ¥150万</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Section 4: Main Visual Analytics Row (64% Left / 36% Right) -->
+      <section aria-label="核心财务可视化" class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-stretch">
+
+        <!-- Left Card (8/12 -> ~65%): Grouped Bar Chart (Top 8 Projects) -->
+        <article class="lg:col-span-8 h-full bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col justify-between gap-gutter-lg">
+          <header class="flex flex-wrap items-start justify-between gap-gutter-md">
+            <div class="flex flex-col gap-1">
+              <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">项目预算 vs 实际成本 vs 已回款对比 (按项目Top 8)</h2>
+              <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">直观识别「高投入低回款」与「成本突破预算红线」项目</p>
+            </div>
+            <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-muted whitespace-nowrap">单位：万元 (RMB)</span>
+          </header>
+
+          <!-- Legend -->
+          <div class="flex flex-wrap items-center gap-gutter-lg">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-baseline-gray"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">核定总预算</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-bright-blue"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">实际已发生成本 (正常)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-coral-red"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">实际已发生成本 (超预算)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-emerald-green"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">累计已回款</span>
+            </div>
+          </div>
+
+          <!-- Grouped Bar SVG (Top 8 Projects, max 300万 = 180px -> 0.6px/万, baseline y=200) -->
+          <div class="w-full">
+            <svg viewBox="0 0 760 265" class="w-full h-auto overflow-visible" role="img" aria-label="项目预算、实际成本与已回款分组柱状图">
+              <!-- Gridlines -->
+              <g class="tabular-nums" font-family="Inter, PingFang SC, sans-serif" font-size="11" fill="#64748B">
+                <line x1="42" y1="20" x2="740" y2="20" stroke="#F1F5F9" stroke-width="1"></line>
+                <text x="34" y="24" text-anchor="end">300</text>
+                <line x1="42" y1="80" x2="740" y2="80" stroke="#F1F5F9" stroke-width="1"></line>
+                <text x="34" y="84" text-anchor="end">200</text>
+                <line x1="42" y1="140" x2="740" y2="140" stroke="#F1F5F9" stroke-width="1"></line>
+                <text x="34" y="144" text-anchor="end">100</text>
+                <line x1="42" y1="200" x2="740" y2="200" stroke="#E2E8F0" stroke-width="1"></line>
+                <text x="34" y="204" text-anchor="end">0</text>
+              </g>
+
+              <!-- 8 Project Groups (step 85px starting at x=60) -->
+              <!-- 1. 智慧园区大屏 (Budget 190, Actual 218 CORAL, Cash 92) -->
+              <g transform="translate(60,0)">
+                <rect x="0" y="86" width="14" height="114" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="69.2" width="14" height="130.8" rx="3" fill="#EF4444"></rect>
+                <rect x="34" y="144.8" width="14" height="55.2" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">智慧园区大屏</text>
+              </g>
+
+              <!-- 2. 华东热能改造 (Budget 220, Actual 230 CORAL, Cash 185) -->
+              <g transform="translate(145,0)">
+                <rect x="0" y="68" width="14" height="132" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="62" width="14" height="138" rx="3" fill="#EF4444"></rect>
+                <rect x="34" y="89" width="14" height="111" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">华东热能改造</text>
+              </g>
+
+              <!-- 3. 滨海立体库二期 (Budget 260, Actual 210 BLUE, Cash 108) -->
+              <g transform="translate(230,0)">
+                <rect x="0" y="44" width="14" height="156" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="74" width="14" height="126" rx="3" fill="#3B82F6"></rect>
+                <rect x="34" y="135.2" width="14" height="64.8" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">滨海立体库二期</text>
+              </g>
+
+              <!-- 4. 宁波港口AGV (Budget 180, Actual 156 BLUE, Cash 165) -->
+              <g transform="translate(315,0)">
+                <rect x="0" y="92" width="14" height="108" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="106.4" width="14" height="93.6" rx="3" fill="#3B82F6"></rect>
+                <rect x="34" y="101" width="14" height="99" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">宁波港口AGV</text>
+              </g>
+
+              <!-- 5. 苏州储能电站 (Budget 140, Actual 152 CORAL, Cash 110) -->
+              <g transform="translate(400,0)">
+                <rect x="0" y="116" width="14" height="84" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="108.8" width="14" height="91.2" rx="3" fill="#EF4444"></rect>
+                <rect x="34" y="134" width="14" height="66" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">苏州储能电站</text>
+              </g>
+
+              <!-- 6. 合肥洁净室机电 (Budget 120, Actual 92 BLUE, Cash 142) -->
+              <g transform="translate(485,0)">
+                <rect x="0" y="128" width="14" height="72" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="144.8" width="14" height="55.2" rx="3" fill="#3B82F6"></rect>
+                <rect x="34" y="114.8" width="14" height="85.2" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">合肥洁净室机电</text>
+              </g>
+
+              <!-- 7. 成都精密装配线 (Budget 100, Actual 74 BLUE, Cash 125) -->
+              <g transform="translate(570,0)">
+                <rect x="0" y="140" width="14" height="60" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="155.6" width="14" height="44.4" rx="3" fill="#3B82F6"></rect>
+                <rect x="34" y="125" width="14" height="75" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">成都精密装配线</text>
+              </g>
+
+              <!-- 8. 青岛冷链WMS (Budget 88, Actual 62 BLUE, Cash 142) -->
+              <g transform="translate(655,0)">
+                <rect x="0" y="147.2" width="14" height="52.8" rx="3" fill="#CBD5E1"></rect>
+                <rect x="17" y="162.8" width="14" height="37.2" rx="3" fill="#3B82F6"></rect>
+                <rect x="34" y="114.8" width="14" height="85.2" rx="3" fill="#10B981"></rect>
+                <text x="24" y="216" text-anchor="end" transform="rotate(-18 24 216)" font-size="11" fill="#475569">青岛冷链WMS</text>
+              </g>
+            </svg>
+          </div>
+        </article>
+
+        <!-- Right Card (4/12 -> ~35%): Large Thick Vibrant Donut Chart + 2x2 Grid Legend -->
+        <article class="lg:col-span-4 h-full bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col justify-between gap-gutter-lg">
+          <header class="flex flex-col gap-1">
+            <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">总成本科目构成拆解</h2>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">人工工时、软硬件采购、外包服务与差旅实施占比</p>
+          </header>
+
+          <!-- Centered Large Thick Donut Chart (Circumference = 2*pi*66 = 414.69) -->
+          <div class="relative w-48 h-48 mx-auto my-auto">
+            <svg viewBox="0 0 180 180" class="w-full h-full -rotate-90" role="img" aria-label="总成本科目构成环形图">
+              <!-- 人工工时 58.3% -> 241.76 (leave 4px white gap -> 237.76) -->
+              <circle cx="90" cy="90" r="66" fill="none" stroke="#3B82F6" stroke-width="26" stroke-dasharray="237.76 414.69" stroke-dashoffset="0"></circle>
+              <!-- 软硬件采购 23.3% -> 96.62 (leave 4px gap -> 92.62) -->
+              <circle cx="90" cy="90" r="66" fill="none" stroke="#6366F1" stroke-width="26" stroke-dasharray="92.62 414.69" stroke-dashoffset="-241.76"></circle>
+              <!-- 外包技术 12.2% -> 50.59 (leave 4px gap -> 46.59) -->
+              <circle cx="90" cy="90" r="66" fill="none" stroke="#F59E0B" stroke-width="26" stroke-dasharray="46.59 414.69" stroke-dashoffset="-338.38"></circle>
+              <!-- 差旅实施 6.1% -> 25.30 (leave 4px gap -> 21.72) -->
+              <circle cx="90" cy="90" r="66" fill="none" stroke="#10B981" stroke-width="26" stroke-dasharray="21.72 414.69" stroke-dashoffset="-388.97"></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-muted">累计总成本</span>
+              <span data-design-text-token="headline-md" class="font-headline text-headline-md text-ink-primary tabular-nums">¥1,058万</span>
+            </div>
+          </div>
+
+          <!-- 2x2 Grid Legend -->
+          <div class="grid grid-cols-2 gap-gutter-md pt-gutter-sm border-t border-border-slate">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-bright-blue shrink-0"></span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary whitespace-nowrap">人工工时</span>
+              </div>
+              <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">58.3%</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-soft-indigo shrink-0"></span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary whitespace-nowrap">软硬件采购</span>
+              </div>
+              <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">23.3%</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-warm-amber shrink-0"></span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary whitespace-nowrap">外包技术</span>
+              </div>
+              <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">12.2%</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-green shrink-0"></span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary whitespace-nowrap">差旅实施</span>
+              </div>
+              <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">6.1%</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- Section 5: Bottom Insight Split (45% Left / 55% Right) -->
+      <section aria-label="业务组毛利与异常预警" class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg items-stretch">
+
+        <!-- Left Card (5/12 -> ~42%): Combo Chart -->
+        <article class="lg:col-span-5 h-full bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col justify-between gap-gutter-lg">
+          <header class="flex flex-col gap-1">
+            <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">各业务组毛利贡献与预算偏差</h2>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">横向对比部门内各小组产值、实际成本与毛利率表现</p>
+          </header>
+
+          <!-- Legend -->
+          <div class="flex flex-wrap items-center gap-gutter-lg">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-navy-bar"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">已确认产值(万)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-slate-bar"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">实际总成本(万)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3.5 h-0.5 bg-emerald-green"></span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary">毛利率(%)</span>
+            </div>
+          </div>
+
+          <!-- Combo SVG Chart (3 Business Groups) -->
+          <div class="w-full">
+            <svg viewBox="0 0 460 210" class="w-full h-auto overflow-visible" role="img" aria-label="各业务组产值、成本与毛利率组合图">
+              <g class="tabular-nums" font-family="Inter, PingFang SC, sans-serif" font-size="11" fill="#64748B">
+                <line x1="36" y1="20" x2="424" y2="20" stroke="#F1F5F9" stroke-width="1"></line>
+                <text x="30" y="24" text-anchor="end">600</text>
+                <text x="430" y="24" text-anchor="start">45%</text>
+
+                <line x1="36" y1="70" x2="424" y2="70" stroke="#F1F5F9" stroke-width="1"></line>
+                <text x="30" y="74" text-anchor="end">400</text>
+                <text x="430" y="74" text-anchor="start">30%</text>
+
+                <line x1="36" y1="120" x2="424" y2="120" stroke="#F1F5F9" stroke-width="1"></line>
+                <text x="30" y="124" text-anchor="end">200</text>
+                <text x="430" y="124" text-anchor="start">15%</text>
+
+                <line x1="36" y1="170" x2="424" y2="170" stroke="#E2E8F0" stroke-width="1"></line>
+                <text x="30" y="174" text-anchor="end">0</text>
+                <text x="430" y="174" text-anchor="start">0%</text>
+              </g>
+
+              <!-- Group 1: 智慧能源组 (Rev 520 -> y=40, Cost 385 -> y=73.75, Margin 26.0% -> y=83.3) -->
+              <g transform="translate(80,0)">
+                <rect x="0" y="40" width="22" height="130" rx="4" fill="#1E293B"></rect>
+                <rect x="26" y="73.75" width="22" height="96.25" rx="4" fill="#94A3B8"></rect>
+                <text x="24" y="192" text-anchor="middle" font-size="11" fill="#475569">智慧能源组</text>
+              </g>
+
+              <!-- Group 2: 工业装备组 (Rev 480 -> y=50, Cost 392 -> y=72, Margin 18.3% -> y=109) -->
+              <g transform="translate(205,0)">
+                <rect x="0" y="50" width="22" height="120" rx="4" fill="#1E293B"></rect>
+                <rect x="26" y="72" width="22" height="98" rx="4" fill="#94A3B8"></rect>
+                <text x="24" y="192" text-anchor="middle" font-size="11" fill="#475569">工业装备组</text>
+              </g>
+
+              <!-- Group 3: 自动化集成组 (Rev 397 -> y=70.75, Cost 281 -> y=99.75, Margin 29.2% -> y=72.7) -->
+              <g transform="translate(330,0)">
+                <rect x="0" y="70.75" width="22" height="99.25" rx="4" fill="#1E293B"></rect>
+                <rect x="26" y="99.75" width="22" height="70.25" rx="4" fill="#94A3B8"></rect>
+                <text x="24" y="192" text-anchor="middle" font-size="11" fill="#475569">自动化集成组</text>
+              </g>
+
+              <!-- Emerald Margin Line -->
+              <polyline fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="104,83.3 229,109 354,72.7"></polyline>
+              <g fill="#FFFFFF" stroke="#10B981" stroke-width="2.5">
+                <circle cx="104" cy="83.3" r="4"></circle>
+                <circle cx="229" cy="109" r="4"></circle>
+                <circle cx="354" cy="72.7" r="4"></circle>
+              </g>
+            </svg>
+          </div>
+        </article>
+
+        <!-- Right Card (7/12 -> ~58%): Alert Leaderboard -->
+        <article class="lg:col-span-7 h-full bg-card-white border border-border-slate rounded-2xl p-section shadow-sm flex flex-col justify-between gap-gutter-lg">
+          <header class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-gutter-sm">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-coral-red shrink-0"></span>
+                <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">重点关注：预算偏差与回款滞后预警榜</h2>
+              </div>
+              <a href="../project-cost-detail/ProjectCostDetail.html" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline whitespace-nowrap">查看全部台账 →</a>
+            </div>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">自动筛选「消耗率超进度10%」或「账期逾60天」项目，点击可穿透核查明细</p>
+          </header>
+
+          <!-- 3 Stacked Alert Sub-Cards -->
+          <div class="flex flex-col gap-gutter-md">
+            <!-- Sub-card 1 -->
+            <div class="bg-card-white border border-border-slate rounded-lg px-gutter-lg py-gutter-md flex items-center justify-between gap-gutter-md hover:border-cobalt-blue transition-colors duration-state-change">
+              <div class="flex flex-col gap-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-gutter-sm">
+                  <span data-design-text-token="label-sm" class="inline-flex px-2 py-0.5 rounded-full bg-coral-soft text-coral-text font-label text-label-sm">超支</span>
+                  <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">智慧园区能耗碳排监测大屏</span>
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">负责人：陈明 · 智慧能源组</span>
+                </div>
+                <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary tabular-nums">实际成本 ¥218万 已超核定预算 ¥190万 (+14.7%)，且质保尾款未回</p>
+              </div>
+              <a href="../project-cost-detail/ProjectCostDetail.html" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline whitespace-nowrap shrink-0">穿透核查 →</a>
+            </div>
+
+            <!-- Sub-card 2 -->
+            <div class="bg-card-white border border-border-slate rounded-lg px-gutter-lg py-gutter-md flex items-center justify-between gap-gutter-md hover:border-cobalt-blue transition-colors duration-state-change">
+              <div class="flex flex-col gap-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-gutter-sm">
+                  <span data-design-text-token="label-sm" class="inline-flex px-2 py-0.5 rounded-full bg-coral-soft text-coral-text font-label text-label-sm">超支</span>
+                  <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">华东热能系统改造项目</span>
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">负责人：张志远 · 工业装备组</span>
+                </div>
+                <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary tabular-nums">预算消耗率 104.2% 超出工期进度 12.5%，外协加工超支 ¥4.5万</p>
+              </div>
+              <a href="../project-cost-detail/ProjectCostDetail.html" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline whitespace-nowrap shrink-0">穿透核查 →</a>
+            </div>
+
+            <!-- Sub-card 3 -->
+            <div class="bg-card-white border border-border-slate rounded-lg px-gutter-lg py-gutter-md flex items-center justify-between gap-gutter-md hover:border-cobalt-blue transition-colors duration-state-change">
+              <div class="flex flex-col gap-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-gutter-sm">
+                  <span data-design-text-token="label-sm" class="inline-flex px-2 py-0.5 rounded-full bg-amber-soft text-amber-text font-label text-label-sm">逾期</span>
+                  <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">滨海新区智能立体库二期</span>
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">负责人：林晓峰 · 自动化集成组</span>
+                </div>
+                <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary tabular-nums">已开票应收账款 ¥150万 账期逾期 68 天，当前累计回款率仅 41.2%</p>
+              </div>
+              <a href="../project-cost-detail/ProjectCostDetail.html" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline whitespace-nowrap shrink-0">穿透核查 →</a>
+            </div>
+          </div>
+        </article>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const pills = document.querySelectorAll('.nav-pill');
+      pills.forEach(function (pill) {
+        pill.addEventListener('click', function () {
+          pills.forEach(function (p) {
+            p.classList.remove('bg-ink-primary', 'text-card-white');
+            p.classList.add('text-ink-secondary');
+          });
+          pill.classList.add('bg-ink-primary', 'text-card-white');
+          pill.classList.remove('text-ink-secondary');
+        });
+      });
+
+      const resetBtn = document.getElementById('reset-filters');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          ['filter-group', 'filter-stage', 'filter-health'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.value = 'all';
+          });
+        });
+      }
+    })();
+  </script>
+
+
+</body></html>

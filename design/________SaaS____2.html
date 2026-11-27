@@ -1,0 +1,265 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>成本明细流水 — 项目财务统计与管控中台</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config" data-stitch-original-src="6a281a90170c0680===../../design-systems/saas-executive/tailwind.config.js">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'canvas-slate': '#F8FAFC',
+        'card-white': '#FFFFFF',
+        'border-slate': '#E2E8F0',
+        'pill-track': '#F1F5F9',
+        'ink-primary': '#0F172A',
+        'ink-secondary': '#475569',
+        'ink-muted': '#64748B',
+        'cobalt-blue': '#2563EB',
+        'cobalt-blue-hover': '#1D4ED8',
+        'cobalt-soft': '#EFF6FF',
+        'cobalt-text': '#1D4ED8',
+        'bright-blue': '#3B82F6',
+        'emerald-green': '#10B981',
+        'emerald-soft': '#ECFDF5',
+        'emerald-text': '#047857',
+        'soft-indigo': '#6366F1',
+        'indigo-soft': '#EEF2FF',
+        'indigo-text': '#4338CA',
+        'warm-amber': '#F59E0B',
+        'amber-soft': '#FFFBEB',
+        'amber-text': '#B45309',
+        'coral-red': '#EF4444',
+        'coral-soft': '#FEF2F2',
+        'coral-text': '#B91C1C',
+        'baseline-gray': '#CBD5E1',
+        'navy-bar': '#1E293B',
+        'slate-bar': '#94A3B8',
+        'light-primary': '#2563EB',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-surface-container': '#FFFFFF',
+        'light-on-surface': '#0F172A',
+        'light-on-surface-variant': '#64748B',
+        'light-outline': '#E2E8F0',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'lg': '12px',
+        '2xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'section': '24px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'title': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.75px', fontWeight: '700' }],
+        'display-lg-mobile': ['26px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'title-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.15px', fontWeight: '600' }],
+        'title-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-md': ['13px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }
+    body { font-family: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="bg-canvas-slate text-ink-primary font-body min-h-screen">
+  <div class="min-h-screen w-full bg-canvas-slate py-section px-page-margin">
+    <div class="max-w-[1280px] mx-auto flex flex-col gap-gutter-xl">
+
+      <!-- Top Brand & Action Header -->
+      <header class="flex flex-wrap items-center justify-between gap-gutter-lg">
+        <div class="flex items-center gap-gutter-md">
+          <div class="w-11 h-11 rounded-lg bg-ink-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[22px] text-card-white" style="font-variation-settings: &#39;FILL&#39; 1;">receipt_long</span>
+          </div>
+          <div class="flex flex-col gap-0.5">
+            <div class="flex flex-wrap items-center gap-gutter-sm">
+              <h1 data-design-text-token="headline-md" class="font-headline text-headline-md text-ink-primary whitespace-nowrap">成本明细流水中心</h1>
+              <span data-design-text-token="label-sm" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cobalt-soft text-cobalt-text font-label text-label-sm whitespace-nowrap">业财凭证全量归集</span>
+            </div>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">跨项目原始凭证明细 · ERP采购入库 / OA报销 / 工时分摊 / 手工调账统一检索</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button type="button" class="inline-flex items-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">download</span>
+            <span data-design-text-token="label-sm">导出凭证流水</span>
+          </button>
+          <button type="button" class="inline-flex items-center gap-1 px-gutter-lg py-gutter-sm rounded bg-cobalt-blue text-light-on-primary shadow-2xs font-label text-label-sm hover:bg-cobalt-blue-hover transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>
+            <span data-design-text-token="label-sm">录入成本凭证</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Module Pill Navigation -->
+      <div class="flex flex-wrap items-center justify-between gap-gutter-md">
+        <nav aria-label="模块切换" class="inline-flex items-center p-1 rounded-full bg-pill-track border border-border-slate">
+          <a href="../executive-cockpit/ExecutiveCockpit.html" class="px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap">驾驶舱总览</a>
+          <a href="#" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full bg-ink-primary text-card-white font-label text-label-sm whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">receipt_long</span>
+            <span>成本明细流水</span>
+          </a>
+          <a href="../cost-allocation-settings/CostAllocationSettings.html" class="px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap">科目与分摊设置</a>
+          <a href="../financial-reconciliation/FinancialReconciliation.html" class="px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap">财务对账报表</a>
+        </nav>
+
+        <div class="flex flex-wrap items-center gap-gutter-sm">
+          <select id="src-filter" aria-label="单据来源筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部数据来源</option>
+            <option value="ERP">ERP 采购入库</option>
+            <option value="OA">OA 报销与付款</option>
+            <option value="HR">人工工时分摊</option>
+            <option value="MANUAL">手工调账</option>
+          </select>
+          <select aria-label="成本科目筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option>全部成本科目</option>
+            <option>人工工时</option>
+            <option>软硬件采购</option>
+            <option>外包技术</option>
+            <option>差旅实施</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Ledger Card -->
+      <section class="bg-card-white border border-border-slate rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-section py-gutter-lg border-b border-border-slate flex flex-wrap items-center justify-between gap-gutter-md">
+          <div class="flex items-center gap-gutter-md">
+            <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">全量成本凭证流水</h2>
+            <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-pill-track text-ink-secondary font-label text-label-sm tabular-nums">本期累计 ¥ 1,058.0万</span>
+          </div>
+          <div class="relative">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
+            <input id="stream-search" type="search" placeholder="搜索凭证号、项目名称或供应商..." class="w-64 pl-8 pr-3 py-1.5 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue focus:bg-card-white">
+          </div>
+        </div>
+
+        <div class="w-full overflow-x-auto">
+          <table class="w-full border-collapse text-left">
+            <thead class="bg-canvas-slate border-b border-border-slate">
+              <tr>
+                <th class="px-gutter-lg py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">入账日期</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">凭证 / 单据号</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">归属项目</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">来源</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">成本科目</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">摘要与供应商</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">不含税金额</th>
+                <th class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">价税合计</th>
+                <th class="px-gutter-lg py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">核验状态</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border-slate">
+              <tr data-src="ERP" class="stream-row h-14 hover:bg-canvas-slate">
+                <td class="px-gutter-lg py-gutter-sm font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">2026-11-24</td>
+                <td class="px-gutter-md py-gutter-sm font-label text-label-sm text-ink-primary tabular-nums whitespace-nowrap">PO-2611-0842</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-primary whitespace-nowrap">华东热能系统改造项目</td>
+                <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2 py-0.5 rounded bg-pill-track text-ink-secondary font-label text-label-sm">ERP</span></td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">软硬件采购</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">高温换热管束 · 宝钢特材</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">¥ 320,000.00</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">¥ 361,600.00</td>
+                <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">已核验</span></td>
+              </tr>
+              <tr data-src="OA" class="stream-row h-14 hover:bg-canvas-slate">
+                <td class="px-gutter-lg py-gutter-sm font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">2026-11-22</td>
+                <td class="px-gutter-md py-gutter-sm font-label text-label-sm text-ink-primary tabular-nums whitespace-nowrap">OA-2611-1109</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-primary whitespace-nowrap">智慧园区能耗碳排监测大屏</td>
+                <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2 py-0.5 rounded bg-pill-track text-ink-secondary font-label text-label-sm">OA</span></td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">外包技术</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">三维数字孪生渲染外包 · 苏州云图</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">¥ 96,500.00</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">¥ 102,290.00</td>
+                <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-amber-soft text-amber-text font-label text-label-sm">待复核</span></td>
+              </tr>
+              <tr data-src="HR" class="stream-row h-14 hover:bg-canvas-slate">
+                <td class="px-gutter-lg py-gutter-sm font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">2026-11-20</td>
+                <td class="px-gutter-md py-gutter-sm font-label text-label-sm text-ink-primary tabular-nums whitespace-nowrap">HR-2611-0045</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-primary whitespace-nowrap">宁波自动化港口AGV调度</td>
+                <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2 py-0.5 rounded bg-pill-track text-ink-secondary font-label text-label-sm">工时</span></td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">人工工时</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">11月中旬算法与调度研发工时分摊</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">¥ 142,800.00</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">¥ 142,800.00</td>
+                <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">已核验</span></td>
+              </tr>
+              <tr data-src="MANUAL" class="stream-row h-14 hover:bg-canvas-slate">
+                <td class="px-gutter-lg py-gutter-sm font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">2026-11-18</td>
+                <td class="px-gutter-md py-gutter-sm font-label text-label-sm text-ink-primary tabular-nums whitespace-nowrap">ADJ-2611-0012</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-primary whitespace-nowrap">滨海新区智能立体库二期</td>
+                <td class="px-gutter-md py-gutter-sm whitespace-nowrap"><span class="inline-flex px-2 py-0.5 rounded bg-pill-track text-ink-secondary font-label text-label-sm">调账</span></td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">差旅实施</td>
+                <td class="px-gutter-md py-gutter-sm font-body text-body-sm text-ink-secondary whitespace-nowrap">现场驻场差旅与吊装费重分类调整</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">¥ 28,400.00</td>
+                <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">¥ 28,400.00</td>
+                <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap"><span class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">已核验</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const srcFilter = document.getElementById('src-filter');
+      const searchInput = document.getElementById('stream-search');
+      const rows = document.querySelectorAll('.stream-row');
+      function apply() {
+        const s = srcFilter ? srcFilter.value : 'all';
+        const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        rows.forEach(function (r) {
+          const matchS = s === 'all' || r.getAttribute('data-src') === s;
+          const matchQ = !q || r.textContent.toLowerCase().includes(q);
+          r.classList.toggle('hidden', !(matchS && matchQ));
+        });
+      }
+      if (srcFilter) srcFilter.addEventListener('change', apply);
+      if (searchInput) searchInput.addEventListener('input', apply);
+    })();
+  </script>
+
+
+</body></html>

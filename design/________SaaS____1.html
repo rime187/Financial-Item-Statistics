@@ -1,0 +1,693 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目财务台账 — 项目财务统计与管控中台</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config" data-stitch-original-src="6a281a90170c0680===../../design-systems/saas-executive/tailwind.config.js">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'canvas-slate': '#F8FAFC',
+        'card-white': '#FFFFFF',
+        'border-slate': '#E2E8F0',
+        'pill-track': '#F1F5F9',
+        'ink-primary': '#0F172A',
+        'ink-secondary': '#475569',
+        'ink-muted': '#64748B',
+        'cobalt-blue': '#2563EB',
+        'cobalt-blue-hover': '#1D4ED8',
+        'cobalt-soft': '#EFF6FF',
+        'cobalt-text': '#1D4ED8',
+        'bright-blue': '#3B82F6',
+        'emerald-green': '#10B981',
+        'emerald-soft': '#ECFDF5',
+        'emerald-text': '#047857',
+        'soft-indigo': '#6366F1',
+        'indigo-soft': '#EEF2FF',
+        'indigo-text': '#4338CA',
+        'warm-amber': '#F59E0B',
+        'amber-soft': '#FFFBEB',
+        'amber-text': '#B45309',
+        'coral-red': '#EF4444',
+        'coral-soft': '#FEF2F2',
+        'coral-text': '#B91C1C',
+        'baseline-gray': '#CBD5E1',
+        'navy-bar': '#1E293B',
+        'slate-bar': '#94A3B8',
+        'light-primary': '#2563EB',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-surface-container': '#FFFFFF',
+        'light-on-surface': '#0F172A',
+        'light-on-surface-variant': '#64748B',
+        'light-outline': '#E2E8F0',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '8px',
+        'lg': '12px',
+        '2xl': '16px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '12px',
+        'gutter-lg': '16px',
+        'gutter-xl': '20px',
+        'section': '24px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Inter"', 'sans-serif'],
+        'headline': ['"Inter"', 'sans-serif'],
+        'title': ['"Inter"', 'sans-serif'],
+        'body': ['"Inter"', 'sans-serif'],
+        'label': ['"Inter"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.75px', fontWeight: '700' }],
+        'display-lg-mobile': ['26px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'title-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.15px', fontWeight: '600' }],
+        'title-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-md': ['13px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      line-height: 1 !important;
+      box-sizing: content-box;
+      overflow: hidden;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+    }
+    body {
+      font-family: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-canvas-slate text-ink-primary font-body min-h-screen">
+  <div class="min-h-screen w-full bg-canvas-slate py-section px-page-margin">
+    <div class="max-w-[1280px] mx-auto flex flex-col gap-gutter-xl">
+
+      <!-- Section 1: Top Brand & Action Header (Identical Shell) -->
+      <header class="flex flex-wrap items-center justify-between gap-gutter-lg">
+        <div class="flex items-center gap-gutter-md">
+          <div class="w-11 h-11 rounded-lg bg-ink-primary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[22px] text-card-white" style="font-variation-settings: &#39;FILL&#39; 1;">bar_chart</span>
+          </div>
+          <div class="flex flex-col gap-0.5">
+            <div class="flex flex-wrap items-center gap-gutter-sm">
+              <h1 data-design-text-token="headline-md" class="font-headline text-headline-md text-ink-primary whitespace-nowrap">项目财务统计与管控中台</h1>
+              <span data-design-text-token="label-sm" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cobalt-soft text-cobalt-text font-label text-label-sm whitespace-nowrap">2026 财年实时台账</span>
+            </div>
+            <p data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">预算执行监控 · 业财毛利核算 · 应收账龄预警 · EAC完工预测</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">description</span>
+            <span data-design-text-token="label-sm">模板下载</span>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">upload</span>
+            <span data-design-text-token="label-sm">导入CSV</span>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-gutter-sm rounded bg-card-white text-ink-primary border border-border-slate shadow-2xs font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px] text-ink-muted" aria-hidden="true">download</span>
+            <span data-design-text-token="label-sm">导出报表</span>
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1 px-gutter-lg py-gutter-sm rounded bg-cobalt-blue text-light-on-primary shadow-2xs font-label text-label-sm hover:bg-cobalt-blue-hover transition-colors duration-state-change whitespace-nowrap">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>
+            <span data-design-text-token="label-sm">新增项目</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Section 2: Top Pill Navigation & Filter Toolbar ("项目财务台账" Active) -->
+      <div class="flex flex-wrap items-center justify-between gap-gutter-md">
+        <nav aria-label="视图切换" class="inline-flex items-center p-1 rounded-full bg-pill-track border border-border-slate">
+          <a href="../executive-cockpit/ExecutiveCockpit.html" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">驾驶舱总览</span>
+          </a>
+          <a href="#" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full bg-ink-primary text-card-white font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">table_chart</span>
+            <span data-design-text-token="label-sm">项目财务台账</span>
+          </a>
+          <a href="#" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">回款与账龄</span>
+          </a>
+          <a href="#" class="inline-flex items-center gap-1.5 px-gutter-lg py-1.5 rounded-full text-ink-secondary hover:text-ink-primary font-label text-label-sm whitespace-nowrap transition-colors duration-state-change">
+            <span data-design-text-token="label-sm">EAC测算沙盘</span>
+          </a>
+        </nav>
+
+        <div class="flex flex-wrap items-center gap-gutter-sm">
+          <select aria-label="业务组筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部业务组</option>
+            <option value="energy">智慧能源组</option>
+            <option value="equip">工业装备组</option>
+            <option value="auto">自动化集成组</option>
+          </select>
+          <select aria-label="阶段筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部阶段</option>
+            <option value="exec">执行交付中</option>
+            <option value="accept">初验待结算</option>
+          </select>
+          <select id="health-filter" aria-label="健康状态筛选" class="px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            <option value="all">全部健康状态</option>
+            <option value="normal">正常</option>
+            <option value="overrun">超支</option>
+            <option value="lag">回款滞后</option>
+          </select>
+          <button id="reset-btn" type="button" class="px-gutter-sm py-1.5 font-label text-label-sm text-ink-muted hover:text-cobalt-text transition-colors duration-state-change whitespace-nowrap">
+            <span data-design-text-token="label-sm">重置筛选</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Split: Spacious Ledger Table Card + Right Slide-Over Drawer Preview -->
+      <div class="flex flex-col lg:flex-row items-start gap-gutter-lg">
+
+        <!-- Left: Single Spacious White rounded-2xl Ledger Card -->
+        <section aria-label="项目财务台账明细表" class="flex-1 min-w-0 w-full bg-card-white border border-border-slate rounded-2xl shadow-sm overflow-hidden">
+          <!-- Card Header Toolbar -->
+          <div class="px-section py-gutter-lg border-b border-border-slate flex flex-wrap items-center justify-between gap-gutter-md">
+            <div class="flex items-center gap-gutter-sm">
+              <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary whitespace-nowrap">全量项目财务台账</h2>
+              <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-pill-track text-ink-secondary font-label text-label-sm tabular-nums whitespace-nowrap">共 8 个项目</span>
+            </div>
+
+            <div class="flex items-center gap-gutter-sm">
+              <div class="relative">
+                <span class="material-symbols-outlined text-[16px] text-ink-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
+                <input id="ledger-search" type="search" placeholder="搜索项目名称、编号或负责人..." class="w-52 pl-8 pr-3 py-1.5 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue focus:bg-card-white">
+              </div>
+              <button type="button" class="inline-flex items-center gap-1.5 px-gutter-md py-1.5 rounded bg-card-white border border-border-slate font-label text-label-sm text-ink-primary hover:bg-pill-track transition-colors duration-state-change whitespace-nowrap">
+                <span class="material-symbols-outlined text-[15px] text-ink-muted" aria-hidden="true">ios_share</span>
+                <span data-design-text-token="label-sm">导出台账</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- High-Density Financial Table (56px rows) -->
+          <div class="w-full overflow-x-auto">
+            <table class="w-full border-collapse text-left">
+              <thead class="bg-canvas-slate border-b border-border-slate">
+                <tr>
+                  <th scope="col" class="px-gutter-lg py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">
+                    <span data-design-text-token="label-sm">项目名称与编号</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">
+                    <span data-design-text-token="label-sm">所属业务组 / 负责人</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">
+                    <span data-design-text-token="label-sm">合同额 (万)</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">
+                    <span data-design-text-token="label-sm">核定预算 (万)</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">
+                    <span data-design-text-token="label-sm">实际成本 (万)</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted w-32 whitespace-nowrap">
+                    <span data-design-text-token="label-sm">预算消耗率</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">
+                    <span data-design-text-token="label-sm">已回款 / 应收未回</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">
+                    <span data-design-text-token="label-sm">核算毛利率</span>
+                  </th>
+                  <th scope="col" class="px-gutter-md py-gutter-md font-label text-label-sm text-ink-muted whitespace-nowrap">
+                    <span data-design-text-token="label-sm">健康状态</span>
+                  </th>
+                  <th scope="col" class="px-gutter-lg py-gutter-md font-label text-label-sm text-ink-muted text-right whitespace-nowrap">
+                    <span data-design-text-token="label-sm">操作</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border-slate">
+                <!-- Row 1: Selected / Overrun -->
+                <tr data-health="overrun" data-search="智慧园区能耗碳排监测大屏 PRJ-2026-001 陈明 智慧能源组" class="ledger-item h-14 bg-cobalt-soft/40 hover:bg-cobalt-soft/60 transition-colors duration-state-change">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">智慧园区能耗碳排监测大屏</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">PRJ-2026-001</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-primary">智慧能源组</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">陈明</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">280.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">190.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-coral-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">218.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-16 h-1.5 rounded-full bg-pill-track overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-coral-red" style="width: 100%;"></div>
+                      </div>
+                      <span data-design-text-token="label-sm" class="font-label text-label-sm text-coral-text tabular-nums">114.7%</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm" class="text-ink-primary">92.0</span>
+                    <span data-design-text-token="body-sm" class="text-ink-muted"> / 48.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-coral-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">22.1%</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-coral-soft text-coral-text font-label text-label-sm">超支</span>
+                  </td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap">
+                    <a href="#" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">穿透核查 →</a>
+                  </td>
+                </tr>
+
+                <!-- Row 2: Overrun -->
+                <tr data-health="overrun" data-search="华东热能系统改造项目 PRJ-2026-018 张志远 工业装备组" class="ledger-item h-14 hover:bg-canvas-slate transition-colors duration-state-change">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">华东热能系统改造项目</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">PRJ-2026-018</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-primary">工业装备组</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">张志远</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">340.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">220.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-coral-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">230.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-16 h-1.5 rounded-full bg-pill-track overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-coral-red" style="width: 100%;"></div>
+                      </div>
+                      <span data-design-text-token="label-sm" class="font-label text-label-sm text-coral-text tabular-nums">104.5%</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm" class="text-ink-primary">185.0</span>
+                    <span data-design-text-token="body-sm" class="text-ink-muted"> / 35.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-amber-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">32.4%</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-coral-soft text-coral-text font-label text-label-sm">超支</span>
+                  </td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap">
+                    <a href="#" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">穿透核查 →</a>
+                  </td>
+                </tr>
+
+                <!-- Row 3: Lag -->
+                <tr data-health="lag" data-search="滨海新区智能立体库二期 PRJ-2026-009 林晓峰 自动化集成组" class="ledger-item h-14 hover:bg-canvas-slate transition-colors duration-state-change">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">滨海新区智能立体库二期</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">PRJ-2026-009</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-primary">自动化集成组</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">林晓峰</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">360.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">260.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">210.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-16 h-1.5 rounded-full bg-pill-track overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-bright-blue" style="width: 80.8%;"></div>
+                      </div>
+                      <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary tabular-nums">80.8%</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm" class="text-ink-primary">108.0</span>
+                    <span data-design-text-token="body-sm" class="text-coral-text"> / 150.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-emerald-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">41.7%</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-amber-soft text-amber-text font-label text-label-sm">回款滞后</span>
+                  </td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap">
+                    <a href="#" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">穿透核查 →</a>
+                  </td>
+                </tr>
+
+                <!-- Row 4: Normal -->
+                <tr data-health="normal" data-search="宁波自动化港口AGV调度 PRJ-2026-021 周伟 自动化集成组" class="ledger-item h-14 hover:bg-canvas-slate transition-colors duration-state-change">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">宁波自动化港口AGV调度</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">PRJ-2026-021</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-primary">自动化集成组</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">周伟</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">270.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">180.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">156.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-16 h-1.5 rounded-full bg-pill-track overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-bright-blue" style="width: 86.7%;"></div>
+                      </div>
+                      <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary tabular-nums">86.7%</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm" class="text-ink-primary">165.0</span>
+                    <span data-design-text-token="body-sm" class="text-ink-muted"> / 20.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-emerald-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">42.2%</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">正常</span>
+                  </td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap">
+                    <a href="#" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">穿透核查 →</a>
+                  </td>
+                </tr>
+
+                <!-- Row 5: Normal -->
+                <tr data-health="normal" data-search="合肥晶圆厂洁净室机电 PRJ-2026-024 刘洋 工业装备组" class="ledger-item h-14 hover:bg-canvas-slate transition-colors duration-state-change">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">合肥晶圆厂洁净室机电</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">PRJ-2026-024</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-primary">工业装备组</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">刘洋</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">210.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">120.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">92.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-16 h-1.5 rounded-full bg-pill-track overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-bright-blue" style="width: 76.7%;"></div>
+                      </div>
+                      <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary tabular-nums">76.7%</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm" class="text-ink-primary">142.0</span>
+                    <span data-design-text-token="body-sm" class="text-ink-muted"> / 0.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-emerald-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">56.2%</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">正常</span>
+                  </td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap">
+                    <a href="#" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">穿透核查 →</a>
+                  </td>
+                </tr>
+
+                <!-- Row 6: Normal -->
+                <tr data-health="normal" data-search="成都精密零件装配线 PRJ-2026-027 王敏 工业装备组" class="ledger-item h-14 hover:bg-canvas-slate transition-colors duration-state-change">
+                  <td class="px-gutter-lg py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">成都精密零件装配线</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">PRJ-2026-027</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex flex-col">
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-primary">工业装备组</span>
+                      <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">王敏</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">180.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm text-ink-muted tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm">100.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-ink-primary tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">74.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-16 h-1.5 rounded-full bg-pill-track overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-bright-blue" style="width: 74%;"></div>
+                      </div>
+                      <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-secondary tabular-nums">74.0%</span>
+                    </div>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-body text-body-sm tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="body-sm" class="text-ink-primary">125.0</span>
+                    <span data-design-text-token="body-sm" class="text-ink-muted"> / 0.0</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm text-right font-title text-title-md text-emerald-text tabular-nums whitespace-nowrap">
+                    <span data-design-text-token="title-md">58.9%</span>
+                  </td>
+                  <td class="px-gutter-md py-gutter-sm whitespace-nowrap">
+                    <span data-design-text-token="label-sm" class="inline-flex px-2.5 py-0.5 rounded-full bg-emerald-soft text-emerald-text font-label text-label-sm">正常</span>
+                  </td>
+                  <td class="px-gutter-lg py-gutter-sm text-right whitespace-nowrap">
+                    <a href="#" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">穿透核查 →</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Right-Side Slide-Over Drawer Preview (380px wide) -->
+        <aside aria-label="项目成本穿透与凭证明细抽屉" class="w-full lg:w-[380px] shrink-0 bg-card-white border border-border-slate rounded-2xl shadow-lg flex flex-col overflow-hidden">
+          <!-- Drawer Header -->
+          <div class="px-gutter-xl py-gutter-lg border-b border-border-slate flex items-start justify-between gap-gutter-sm">
+            <div class="flex flex-col gap-0.5">
+              <h2 data-design-text-token="title-lg" class="font-title text-title-lg text-ink-primary">项目成本穿透与凭证明细</h2>
+              <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted">PRJ-2026-001 · 智慧园区能耗碳排监测大屏</span>
+            </div>
+            <button type="button" aria-label="关闭抽屉" class="w-7 h-7 rounded inline-flex items-center justify-center text-ink-muted hover:text-ink-primary hover:bg-pill-track transition-colors duration-state-change">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+
+          <!-- 4-Category Cost Breakdown -->
+          <div class="px-gutter-xl py-gutter-lg border-b border-border-slate flex flex-col gap-gutter-md">
+            <div class="flex items-center justify-between">
+              <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">四大科目成本拆解</span>
+              <span data-design-text-token="label-sm" class="font-label text-label-sm text-coral-text tabular-nums">总超支 +¥28.0万</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-gutter-sm">
+              <div class="p-gutter-md rounded-lg bg-canvas-slate border border-border-slate flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary">人工工时</span>
+                  <span class="w-2 h-2 rounded-full bg-bright-blue"></span>
+                </div>
+                <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">¥ 118.4万</span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-coral-text tabular-nums">预算 100.0万</span>
+              </div>
+
+              <div class="p-gutter-md rounded-lg bg-canvas-slate border border-border-slate flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary">软硬件采购</span>
+                  <span class="w-2 h-2 rounded-full bg-soft-indigo"></span>
+                </div>
+                <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">¥ 56.2万</span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">预算 50.0万</span>
+              </div>
+
+              <div class="p-gutter-md rounded-lg bg-canvas-slate border border-border-slate flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary">外包技术</span>
+                  <span class="w-2 h-2 rounded-full bg-warm-amber"></span>
+                </div>
+                <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">¥ 31.0万</span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-muted tabular-nums">预算 28.0万</span>
+              </div>
+
+              <div class="p-gutter-md rounded-lg bg-canvas-slate border border-border-slate flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span data-design-text-token="body-sm" class="font-body text-body-sm text-ink-secondary">差旅实施</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-green"></span>
+                </div>
+                <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary tabular-nums">¥ 12.4万</span>
+                <span data-design-text-token="body-sm" class="font-body text-body-sm text-emerald-text tabular-nums">预算 12.0万</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Editable Cost Voucher Entries -->
+          <div class="px-gutter-xl py-gutter-lg flex flex-col gap-gutter-md">
+            <div class="flex items-center justify-between">
+              <span data-design-text-token="title-md" class="font-title text-title-md text-ink-primary">可编辑成本凭证明细</span>
+              <button type="button" data-design-text-token="label-sm" class="font-label text-label-sm text-cobalt-text hover:underline">+ 新增凭证</button>
+            </div>
+
+            <!-- Voucher Entry 1 (Editable) -->
+            <div class="p-gutter-md rounded-lg border border-border-slate bg-card-white flex flex-col gap-gutter-sm">
+              <div class="flex items-center justify-between gap-2">
+                <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-muted tabular-nums">PZ-2611-042 · 2026-11-21</span>
+                <span data-design-text-token="label-sm" class="inline-flex px-2 py-0.5 rounded bg-pill-track text-ink-secondary font-label text-label-sm">ERP</span>
+              </div>
+              <div class="grid grid-cols-2 gap-gutter-sm">
+                <select aria-label="凭证1科目" class="px-2 py-1 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+                  <option selected>软硬件采购</option>
+                  <option>人工工时</option>
+                  <option>外包技术</option>
+                  <option>差旅实施</option>
+                </select>
+                <input type="text" aria-label="凭证1金额" value="184,000.00" class="px-2 py-1 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-primary text-right tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+              </div>
+              <input type="text" aria-label="凭证1摘要" value="LED异形拼接控制卡与边缘网关采购" class="w-full px-2 py-1 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            </div>
+
+            <!-- Voucher Entry 2 (Editable) -->
+            <div class="p-gutter-md rounded-lg border border-border-slate bg-card-white flex flex-col gap-gutter-sm">
+              <div class="flex items-center justify-between gap-2">
+                <span data-design-text-token="label-sm" class="font-label text-label-sm text-ink-muted tabular-nums">PZ-2611-038 · 2026-11-19</span>
+                <span data-design-text-token="label-sm" class="inline-flex px-2 py-0.5 rounded bg-pill-track text-ink-secondary font-label text-label-sm">OA</span>
+              </div>
+              <div class="grid grid-cols-2 gap-gutter-sm">
+                <select aria-label="凭证2科目" class="px-2 py-1 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+                  <option>软硬件采购</option>
+                  <option>人工工时</option>
+                  <option selected>外包技术</option>
+                  <option>差旅实施</option>
+                </select>
+                <input type="text" aria-label="凭证2金额" value="96,500.00" class="px-2 py-1 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-primary text-right tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+              </div>
+              <input type="text" aria-label="凭证2摘要" value="三维数字孪生大屏前端渲染外包二期" class="w-full px-2 py-1 rounded bg-canvas-slate border border-border-slate font-body text-body-sm text-ink-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-blue">
+            </div>
+          </div>
+
+          <!-- Drawer Footer -->
+          <div class="px-gutter-xl py-gutter-md border-t border-border-slate bg-canvas-slate flex items-center justify-end gap-gutter-sm">
+            <button type="button" class="px-gutter-md py-1.5 rounded bg-card-white text-ink-primary border border-border-slate font-label text-label-sm hover:bg-pill-track transition-colors duration-state-change">
+              <span data-design-text-token="label-sm">重置修改</span>
+            </button>
+            <button type="button" class="px-gutter-lg py-1.5 rounded bg-cobalt-blue text-light-on-primary font-label text-label-sm hover:bg-cobalt-blue-hover transition-colors duration-state-change">
+              <span data-design-text-token="label-sm">保存并重算毛利</span>
+            </button>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const searchInput = document.getElementById('ledger-search');
+      const healthFilter = document.getElementById('health-filter');
+      const resetBtn = document.getElementById('reset-btn');
+      const items = document.querySelectorAll('.ledger-item');
+
+      function filterRows() {
+        const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        const h = healthFilter ? healthFilter.value : 'all';
+        items.forEach(function (row) {
+          const text = (row.getAttribute('data-search') || '').toLowerCase();
+          const health = row.getAttribute('data-health');
+          const matchQ = !q || text.includes(q);
+          const matchH = h === 'all' || health === h;
+          row.classList.toggle('hidden', !(matchQ && matchH));
+        });
+      }
+
+      if (searchInput) searchInput.addEventListener('input', filterRows);
+      if (healthFilter) healthFilter.addEventListener('change', filterRows);
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          if (searchInput) searchInput.value = '';
+          if (healthFilter) healthFilter.value = 'all';
+          filterRows();
+        });
+      }
+    })();
+  </script>
+
+
+</body></html>
