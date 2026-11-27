@@ -10,6 +10,11 @@
     color: #0F172A;
     margin: 0;
   }
+
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #2563EB;
+    outline-offset: 2px;
+  }
 }
 
 .tabular-nums {
@@ -21,9 +26,150 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+.visually-hidden {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/* ==================== Native Top-Layer Dialogs & Drawers ==================== */
+
+/* MANDATORY: Prevent scroll chaining inside modal dialogs and over their backdrop
+   without mutating html/body overflow (prevents layout shift & scrollbar jump). */
+dialog.app-dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.app-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgb(15 23 42 / 0);
+  backdrop-filter: blur(0px);
+  transition-property: background-color, backdrop-filter, display, overlay;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-behavior: allow-discrete;
+}
+
+dialog.app-dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0F172A;
+  max-width: none;
+  max-height: none;
+  opacity: 0;
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-behavior: allow-discrete;
+}
+
+/* Centered Modal Variant */
+dialog.app-dialog--modal {
+  margin: auto;
+  width: min(var(--dialog-max-w, 42rem), calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.app-dialog--modal {
+    transform: translateY(8px) scale(0.97);
   }
+}
+
+/* Right Slide-Over Drawer Variant */
+dialog.app-dialog--drawer {
+  margin: 0 0 0 auto;
+  inset-block: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(var(--dialog-max-w, 580px), 100vw);
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.app-dialog--drawer {
+    transform: translateX(100%);
+  }
+}
+
+/* Open state scoped strictly to dialog[open] (never set display unconditionally on dialog) */
+dialog.app-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+:is(dialog.app-dialog[open]):where(:not([data-closing])) {
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
+
+  &::backdrop {
+    background-color: rgb(15 23 42 / 0.38);
+    backdrop-filter: blur(1.5px);
+
+    @starting-style {
+      background-color: rgb(15 23 42 / 0);
+      backdrop-filter: blur(0px);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(dialog.app-dialog--modal[open]):where(:not([data-closing])) {
+    transform: translateY(0) scale(1);
+
+    @starting-style {
+      transform: translateY(8px) scale(0.97);
+    }
+  }
+
+  :is(dialog.app-dialog--drawer[open]):where(:not([data-closing])) {
+    transform: translateX(0);
+
+    @starting-style {
+      transform: translateX(100%);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.app-dialog,
+  dialog.app-dialog::backdrop {
+    transition-duration: 0.1s;
+  }
+}
+
+/* Subtle refined scrollbars inside panels and tables */
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
 }

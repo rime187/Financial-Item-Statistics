@@ -100,6 +100,7 @@ export function exportProjectsReportCsv(projects: EnrichedProject[]): void {
     '项目编号',
     '项目名称',
     '客户名称',
+    '收款节点',
     '业务组',
     '负责人',
     '阶段',
@@ -125,6 +126,7 @@ export function exportProjectsReportCsv(projects: EnrichedProject[]): void {
     p.code,
     p.name,
     p.client,
+    p.milestone,
     p.businessGroup,
     p.manager,
     p.stage,
@@ -139,9 +141,9 @@ export function exportProjectsReportCsv(projects: EnrichedProject[]): void {
     p.metrics.budgetConsumptionRate.toFixed(1),
     p.metrics.recognizedRevenue.toFixed(1),
     p.metrics.grossMargin.toFixed(1),
-    p.invoicedAmount.toFixed(1),
-    p.collectedAmount.toFixed(1),
-    p.metrics.uncollectedReceivable.toFixed(1),
+    p.invoicedAmount.toFixed(2),
+    p.collectedAmount.toFixed(2),
+    p.metrics.uncollectedReceivable.toFixed(2),
     p.maxOverdueDays,
     p.metrics.healthStatus,
   ]);
@@ -156,6 +158,41 @@ export function exportProjectsReportCsv(projects: EnrichedProject[]): void {
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   triggerDownload(`项目财务成本报表_${y}${m}${d}.csv`, lines.join('\r\n'));
+}
+
+export function exportProjectVouchersCsv(project: EnrichedProject): void {
+  const headers = [
+    '项目编号',
+    '项目名称',
+    '入账日期',
+    '凭证号',
+    '成本科目',
+    '单据来源',
+    '不含税金额(万)',
+    '税率(%)',
+    '含税金额(万)',
+    '摘要说明',
+  ];
+
+  const rows = project.vouchers.map((v) => [
+    project.code,
+    project.name,
+    v.date,
+    v.voucherNo,
+    v.category,
+    v.source,
+    v.amountExclTax.toFixed(2),
+    v.taxRate,
+    (v.amountExclTax * (1 + v.taxRate / 100)).toFixed(2),
+    v.summary,
+  ]);
+
+  const lines = [
+    headers.map(escapeCsvCell).join(','),
+    ...rows.map((r) => r.map(escapeCsvCell).join(',')),
+  ];
+
+  triggerDownload(`${project.code}_成本凭证明细.csv`, lines.join('\r\n'));
 }
 
 function parseCsvMatrix(rawText: string): string[][] {
@@ -229,6 +266,7 @@ export interface CsvImportResult {
   addedCount: number;
   updatedCount: number;
   skippedCount: number;
+  skippedReasons: string[];
 }
 
 export function importProjectsFromCsvText(
@@ -242,14 +280,15 @@ export function importProjectsFromCsvText(
       addedCount: 0,
       updatedCount: 0,
       skippedCount: 0,
+      skippedReasons: ['CSV 内容为空或缺少数据行'],
     };
   }
 
   const headerRow = matrix[0];
+  const findColIdx = (names: string[]) =>
+    headerRow.findIndex((h) => names.some((n) => h.includes(n)));
   const colIdx = (names: string[], defaultIdx: number) => {
-    const found = headerRow.findIndex((h) =>
-      names.some((n) => h.includes(n))
-    );
+    const found = findColIdx(names);
     return found >= 0 ? found : defaultIdx;
   };
 
@@ -266,10 +305,10 @@ export function importProjectsFromCsvText(
   const idxInvoiced = colIdx(['已开票', '开票'], 10);
   const idxCollected = colIdx(['已回款', '回款'], 11);
   const idxOverdue = colIdx(['逾期天数', '账龄'], 12);
-  const idxLabor = colIdx(['人工工时'], 13);
-  const idxProc = colIdx(['软硬件采购'], 14);
-  const idxOut = colIdx(['外包技术'], 15);
-  const idxTravel = colIdx(['差旅实施'], 16);
+  const idxLabor = findColIdx(['人工工时']);
+  const idxProc = findColIdx(['软硬件采购']);
+  const idxOut = findColIdx(['外包技术']);
+  const idxTravel = findColIdx(['差旅实施']);
 
   const nextProjects = existingProjects.map((p) => ({
     ...p,
@@ -280,28 +319,48 @@ export function importProjectsFromCsvText(
   let addedCount = 0;
   let updatedCount = 0;
   let skippedCount = 0;
+  const skippedReasons: string[] = [];
   const today = new Date().toISOString().slice(0, 10);
+
+  const cellAt = (row: string[], idx: number): string | undefined =>
+    idx >= 0 ? row[idx] : undefined;
 
   for (let r = 1; r < matrix.length; r++) {
     const row = matrix[r];
-    const code = (row[idxCode] || '').trim();
-    const name = (row[idxName] || '').trim();
+    const code = (cellAt(row, idxCode) || '').trim();
+    const name = (cellAt(row, idxName) || '').trim();
     if (!code || !name) {
       skippedCount++;
+      if (skippedReasons.length < 3) {
+        skippedReasons.push(`第 ${r + 1} 行缺少项目编号或名称`);
+      }
       continue;
     }
 
-    const contractAmount = parseNumber(row[idxContract], NaN);
-    const approvedBudget = parseNumber(row[idxBudget], NaN);
-    if (!Number.isFinite(contractAmount) || !Number.isFinite(approvedBudget)) {
+    const contractAmount = parseNumber(cellAt(row, idxContract), NaN);
+    const approvedBudget = parseNumber(cellAt(row, idxBudget), NaN);
+    if (
+      !Number.isFinite(contractAmount) ||
+      contractAmount < 0 ||
+      !Number.isFinite(approvedBudget) ||
+      approvedBudget < 1
+    ) {
       skippedCount++;
+      if (skippedReasons.length < 3) {
+        skippedReasons.push(`第 ${r + 1} 行 (${code}) 合同额或核定预算无效`);
+      }
       continue;
     }
 
-    const labor = Math.max(0, parseNumber(row[idxLabor], 0));
-    const procurement = Math.max(0, parseNumber(row[idxProc], 0));
-    const outsourcing = Math.max(0, parseNumber(row[idxOut], 0));
-    const travel = Math.max(0, parseNumber(row[idxTravel], 0));
+    const laborRaw = cellAt(row, idxLabor);
+    const procRaw = cellAt(row, idxProc);
+    const outRaw = cellAt(row, idxOut);
+    const travelRaw = cellAt(row, idxTravel);
+
+    const labor = Math.max(0, parseNumber(laborRaw, 0));
+    const procurement = Math.max(0, parseNumber(procRaw, 0));
+    const outsourcing = Math.max(0, parseNumber(outRaw, 0));
+    const travel = Math.max(0, parseNumber(travelRaw, 0));
 
     const buildInitVouchers = (prefix: string): CostVoucher[] => {
       const list: CostVoucher[] = [];
@@ -356,64 +415,101 @@ export function importProjectsFromCsvText(
       return list;
     };
 
-    const existingIndex = nextProjects.findIndex((p) => p.code === code);
-    const hasCategoryColumns =
-      row[idxLabor] !== undefined ||
-      row[idxProc] !== undefined ||
-      row[idxOut] !== undefined ||
-      row[idxTravel] !== undefined;
+    const existingIndex = nextProjects.findIndex(
+      (p) => p.code.trim().toLowerCase() === code.toLowerCase()
+    );
+    // Only overwrite existing vouchers if category columns were present AND non-empty
+    const hasNonEmptyCategoryValues = [
+      laborRaw,
+      procRaw,
+      outRaw,
+      travelRaw,
+    ].some((cell) => (cell ?? '').trim() !== '');
 
     if (existingIndex >= 0) {
       const prev = nextProjects[existingIndex];
-      const nextInvoiced = Math.max(0, parseNumber(row[idxInvoiced], prev.invoicedAmount));
-      const nextCollected = Math.max(0, parseNumber(row[idxCollected], prev.collectedAmount));
-      const nextMilestone = row[idxMilestone] || prev.milestone;
+      const nextInvoiced = Math.max(
+        0,
+        parseNumber(cellAt(row, idxInvoiced), prev.invoicedAmount)
+      );
+      const nextCollected = Math.max(
+        0,
+        parseNumber(cellAt(row, idxCollected), prev.collectedAmount)
+      );
+      const nextMilestone = cellAt(row, idxMilestone) || prev.milestone;
       const billingChanged =
-        nextInvoiced !== prev.invoicedAmount || nextCollected !== prev.collectedAmount;
+        nextInvoiced !== prev.invoicedAmount ||
+        nextCollected !== prev.collectedAmount;
       nextProjects[existingIndex] = {
         ...prev,
         name,
-        client: row[idxClient] || prev.client,
+        client: cellAt(row, idxClient) || prev.client,
         milestone: nextMilestone,
-        businessGroup: row[idxGroup] || prev.businessGroup,
-        manager: row[idxManager] || prev.manager,
-        stage: row[idxStage] ? normalizeStage(row[idxStage]) : prev.stage,
+        businessGroup: cellAt(row, idxGroup) || prev.businessGroup,
+        manager: cellAt(row, idxManager) || prev.manager,
+        stage: cellAt(row, idxStage)
+          ? normalizeStage(cellAt(row, idxStage))
+          : prev.stage,
         contractAmount,
         approvedBudget,
-        progress: Math.min(100, Math.max(0, parseNumber(row[idxProgress], prev.progress))),
+        progress: Math.min(
+          100,
+          Math.max(0, parseNumber(cellAt(row, idxProgress), prev.progress))
+        ),
         invoicedAmount: nextInvoiced,
         collectedAmount: nextCollected,
-        maxOverdueDays: Math.max(0, Math.round(parseNumber(row[idxOverdue], prev.maxOverdueDays))),
-        vouchers: hasCategoryColumns
+        maxOverdueDays: Math.max(
+          0,
+          Math.round(parseNumber(cellAt(row, idxOverdue), prev.maxOverdueDays))
+        ),
+        vouchers: hasNonEmptyCategoryValues
           ? buildInitVouchers(prev.id)
           : prev.vouchers,
         paymentRecords: billingChanged
-          ? buildInitialPaymentRecords(prev.id, nextInvoiced, nextCollected, nextMilestone, today)
+          ? buildInitialPaymentRecords(
+              prev.id,
+              nextInvoiced,
+              nextCollected,
+              nextMilestone,
+              today
+            )
           : prev.paymentRecords,
       };
       updatedCount++;
     } else {
       const newId = `prj-${Date.now()}-${r}`;
-      const invoiced = Math.max(0, parseNumber(row[idxInvoiced], 0));
-      const collected = Math.max(0, parseNumber(row[idxCollected], 0));
-      const milestone = row[idxMilestone] || '进度验收款';
+      const invoiced = Math.max(0, parseNumber(cellAt(row, idxInvoiced), 0));
+      const collected = Math.max(0, parseNumber(cellAt(row, idxCollected), 0));
+      const milestone = cellAt(row, idxMilestone) || '进度验收款';
       nextProjects.push({
         id: newId,
         code,
         name,
-        client: row[idxClient] || '企业客户',
+        client: cellAt(row, idxClient) || '企业客户',
         milestone,
-        businessGroup: row[idxGroup] || '数智底座组',
-        manager: row[idxManager] || '待指派',
-        stage: normalizeStage(row[idxStage]),
+        businessGroup: cellAt(row, idxGroup) || '数智底座组',
+        manager: cellAt(row, idxManager) || '待指派',
+        stage: normalizeStage(cellAt(row, idxStage)),
         contractAmount,
         approvedBudget,
-        progress: Math.min(100, Math.max(0, parseNumber(row[idxProgress], 0))),
+        progress: Math.min(
+          100,
+          Math.max(0, parseNumber(cellAt(row, idxProgress), 0))
+        ),
         invoicedAmount: invoiced,
         collectedAmount: collected,
-        maxOverdueDays: Math.max(0, Math.round(parseNumber(row[idxOverdue], 0))),
+        maxOverdueDays: Math.max(
+          0,
+          Math.round(parseNumber(cellAt(row, idxOverdue), 0))
+        ),
         vouchers: buildInitVouchers(newId),
-        paymentRecords: buildInitialPaymentRecords(newId, invoiced, collected, milestone, today),
+        paymentRecords: buildInitialPaymentRecords(
+          newId,
+          invoiced,
+          collected,
+          milestone,
+          today
+        ),
       });
       addedCount++;
     }
@@ -424,5 +520,6 @@ export function importProjectsFromCsvText(
     addedCount,
     updatedCount,
     skippedCount,
+    skippedReasons,
   };
 }

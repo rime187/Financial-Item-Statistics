@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Check,
@@ -7,6 +7,8 @@ import {
   Pencil,
   Plus,
   Receipt,
+  Search,
+  Sparkles,
   Trash2,
   Wallet,
   X,
@@ -32,9 +34,12 @@ import {
   calcPortfolioSummary,
 } from '../utils/finance';
 import { validatePaymentRecordForm } from '../utils/projectOps';
+import { ModalDialog } from './ModalDialog';
 
 interface ReceivablesAgingProps {
   projects: EnrichedProject[];
+  initialModalProjectId?: string | null;
+  onClearInitialModalProject?: () => void;
   onAddPaymentRecord: (
     projectId: string,
     record: Omit<PaymentRecord, 'id'>
@@ -48,13 +53,32 @@ interface ReceivablesAgingProps {
   onUpdateOverdueDays: (projectId: string, maxOverdueDays: number) => void;
 }
 
+const PAYMENT_FIELD_ORDER = ['date', 'amount', 'voucherNo', 'note'];
+
+function matchesAgingBucket(p: EnrichedProject, bucket: string): boolean {
+  if (p.metrics.uncollectedReceivable <= 0) return false;
+  if (bucket === '0-30天') return p.maxOverdueDays <= 30;
+  if (bucket === '31-60天') return p.maxOverdueDays > 30 && p.maxOverdueDays <= 60;
+  if (bucket === '61-90天') return p.maxOverdueDays > 60 && p.maxOverdueDays <= 90;
+  if (bucket === '90天以上') return p.maxOverdueDays > 90;
+  return true;
+}
+
 export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
   projects,
+  initialModalProjectId,
+  onClearInitialModalProject,
   onAddPaymentRecord,
   onUpdatePaymentRecord,
   onDeletePaymentRecord,
   onUpdateOverdueDays,
 }) => {
+  const captionId = useId();
+  const modalTitleId = useId();
+  const baseId = useId();
+  const addFormRef = useRef<HTMLFormElement>(null);
+  const editFormRef = useRef<HTMLFormElement>(null);
+
   const summary = useMemo(() => calcPortfolioSummary(projects), [projects]);
   const agingBuckets = useMemo(
     () => calcAgingDistribution(projects),
@@ -68,14 +92,39 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     [projects]
   );
 
+  // Interactive table filters
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [onlyUncollected, setOnlyUncollected] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const sortedProjects = useMemo(() => {
-    return [...projects].sort((a, b) => {
-      if (b.maxOverdueDays !== a.maxOverdueDays) {
-        return b.maxOverdueDays - a.maxOverdueDays;
-      }
-      return b.metrics.uncollectedReceivable - a.metrics.uncollectedReceivable;
-    });
-  }, [projects]);
+    const q = searchQuery.trim().toLowerCase();
+    return [...projects]
+      .filter((p) => {
+        if (selectedBucket && !matchesAgingBucket(p, selectedBucket)) {
+          return false;
+        }
+        if (onlyUncollected && p.metrics.uncollectedReceivable <= 0) {
+          return false;
+        }
+        if (q) {
+          return (
+            p.name.toLowerCase().includes(q) ||
+            p.code.toLowerCase().includes(q) ||
+            p.client.toLowerCase().includes(q) ||
+            p.milestone.toLowerCase().includes(q) ||
+            p.businessGroup.toLowerCase().includes(q)
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (b.maxOverdueDays !== a.maxOverdueDays) {
+          return b.maxOverdueDays - a.maxOverdueDays;
+        }
+        return b.metrics.uncollectedReceivable - a.metrics.uncollectedReceivable;
+      });
+  }, [projects, selectedBucket, onlyUncollected, searchQuery]);
 
   const uncollectedProjectsCount = useMemo(
     () => projects.filter((p) => p.metrics.uncollectedReceivable > 0).length,
@@ -117,26 +166,11 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     [projects, modalProjectId]
   );
 
-  useEffect(() => {
-    if (!activeModalProject) return;
-    setOverdueDraft(String(activeModalProject.maxOverdueDays));
-    setOverdueError(null);
-  }, [activeModalProject?.id, activeModalProject?.maxOverdueDays]);
-
-  useEffect(() => {
-    if (!modalProjectId) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (editingRecordId) {
-          setEditingRecordId(null);
-        } else {
-          setModalProjectId(null);
-        }
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [modalProjectId, editingRecordId]);
+  const lastModalProjectRef = useRef<EnrichedProject | null>(activeModalProject);
+  if (activeModalProject) {
+    lastModalProjectRef.current = activeModalProject;
+  }
+  const displayModalProject = activeModalProject ?? lastModalProjectRef.current;
 
   const openModal = (p: EnrichedProject) => {
     setModalProjectId(p.id);
@@ -162,8 +196,38 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     setNewNote(`${p.milestone}回款到账`);
   };
 
+  // Handle cross-tab jump from ProjectDrawer directly into a project's payment modal
+  useEffect(() => {
+    if (!initialModalProjectId) return;
+    const target = projects.find((p) => p.id === initialModalProjectId);
+    if (target) {
+      openModal(target);
+    }
+    onClearInitialModalProject?.();
+  }, [initialModalProjectId, projects, onClearInitialModalProject]);
+
+  useEffect(() => {
+    if (!activeModalProject) return;
+    setOverdueDraft(String(activeModalProject.maxOverdueDays));
+    setOverdueError(null);
+  }, [activeModalProject?.id, activeModalProject?.maxOverdueDays]);
+
+  const handleBeforeModalCancel = () => {
+    if (editingRecordId) {
+      setEditingRecordId(null);
+      setEditErrors({});
+      return false;
+    }
+    if (confirmDeleteRecordId) {
+      setConfirmDeleteRecordId(null);
+      return false;
+    }
+    return true;
+  };
+
   const handleOverdueDaysSave = () => {
     if (!activeModalProject) return;
+    if (activeModalProject.metrics.uncollectedReceivable <= 0) return;
     const n = Number(overdueDraft);
     if (overdueDraft.trim() === '' || !Number.isFinite(n) || n < 0) {
       setOverdueError('逾期天数不可为负数');
@@ -171,6 +235,23 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     }
     setOverdueError(null);
     onUpdateOverdueDays(activeModalProject.id, Math.round(n));
+  };
+
+  const handleOneClickSettle = () => {
+    if (!activeModalProject) return;
+    const remaining = activeModalProject.metrics.uncollectedReceivable;
+    if (remaining <= 0) return;
+    const today = new Date().toISOString().slice(0, 10);
+    onAddPaymentRecord(activeModalProject.id, {
+      date: today,
+      type: '回款',
+      amount: remaining,
+      voucherNo: `HK-${today.slice(2, 7).replace('-', '')}-${String(
+        Math.floor(100 + Math.random() * 899)
+      )}`,
+      note: `${activeModalProject.milestone}尾款结清到账`,
+    });
+    setShowAddForm(false);
   };
 
   const handleAddRecordSubmit = (e: React.FormEvent) => {
@@ -185,6 +266,12 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     });
     if (!validation.valid) {
       setAddErrors(validation.errors);
+      const firstInvalid = PAYMENT_FIELD_ORDER.find((k) => validation.errors[k]);
+      if (firstInvalid && addFormRef.current) {
+        addFormRef.current
+          .querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
+          ?.focus();
+      }
       return;
     }
 
@@ -231,6 +318,12 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     });
     if (!validation.valid) {
       setEditErrors(validation.errors);
+      const firstInvalid = PAYMENT_FIELD_ORDER.find((k) => validation.errors[k]);
+      if (firstInvalid && editFormRef.current) {
+        editFormRef.current
+          .querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
+          ?.focus();
+      }
       return;
     }
     onUpdatePaymentRecord(activeModalProject.id, recordId, {
@@ -243,6 +336,18 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
     setEditingRecordId(null);
     setEditErrors({});
   };
+
+  const toggleBucket = (bucket: string) => {
+    setSelectedBucket((prev) => (prev === bucket ? null : bucket));
+  };
+
+  const newAmtNum = Number(newAmount);
+  const showOverCollectionHint =
+    displayModalProject !== null &&
+    newType === '回款' &&
+    Number.isFinite(newAmtNum) &&
+    newAmtNum > displayModalProject.metrics.uncollectedReceivable &&
+    displayModalProject.metrics.uncollectedReceivable > 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -257,7 +362,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
               累计已开票总额
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-              <Receipt className="w-4 h-4" />
+              <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -276,7 +381,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
               累计实际回款总额
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] text-[#10B981] flex items-center justify-center shrink-0">
-              <Wallet className="w-4 h-4" />
+              <Wallet className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -295,7 +400,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
               开票未回应收总额
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#FFFBEB] text-[#F59E0B] flex items-center justify-center shrink-0">
-              <Hourglass className="w-4 h-4" />
+              <Hourglass className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -314,7 +419,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
               &gt;60天逾期高危应收
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#FEF2F2] text-[#EF4444] flex items-center justify-center shrink-0">
-              <AlertCircle className="w-4 h-4" />
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -330,7 +435,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
 
       {/* Row 2: Aging Distribution BarChart + Group Collection Progress */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left: Aging Buckets Chart + Bars */}
+        {/* Left: Aging Buckets Chart + Clickable Filter Bars */}
         <article className="lg:col-span-6 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 flex flex-col justify-between gap-5">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col gap-1">
@@ -338,12 +443,23 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                 应收账款账龄结构分布
               </h2>
               <p className="text-xs text-[#64748B] tabular-nums">
-                开票未回余额 ¥{summary.totalUncollected.toFixed(1)}万 按逾期天数分段统计
+                开票未回余额 ¥{summary.totalUncollected.toFixed(1)}万 · 点击任意账龄分段筛选下表明细
               </p>
             </div>
-            <span className="text-xs text-[#64748B] whitespace-nowrap">
-              单位：万元
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {selectedBucket && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedBucket(null)}
+                  className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] hover:bg-blue-100 text-[11px] font-medium cursor-pointer"
+                >
+                  全部账龄
+                </button>
+              )}
+              <span className="text-xs text-[#64748B] whitespace-nowrap">
+                单位：万元
+              </span>
+            </div>
           </div>
 
           <div className="w-full h-[180px]">
@@ -381,6 +497,9 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                         <div className="text-[#475569] mt-0.5">
                           余额 ¥{b.amount.toFixed(1)}万 · 占比 {b.percent}% ({b.count}个项目)
                         </div>
+                        <div className="text-[11px] text-[#2563EB] mt-1 font-medium">
+                          点击按该账龄筛选明细表
+                        </div>
                       </div>
                     );
                   }}
@@ -390,43 +509,69 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                   radius={[6, 6, 0, 0]}
                   maxBarSize={44}
                   isAnimationActive={false}
+                  cursor="pointer"
+                  onClick={(data) => {
+                    const bucket = (data?.payload as { bucket?: string } | undefined)?.bucket;
+                    if (typeof bucket === 'string') toggleBucket(bucket);
+                  }}
                 >
                   {agingBuckets.map((entry) => (
-                    <Cell key={entry.bucket} fill={entry.color} />
+                    <Cell
+                      key={entry.bucket}
+                      fill={entry.color}
+                      fillOpacity={
+                        selectedBucket && selectedBucket !== entry.bucket
+                          ? 0.32
+                          : 1
+                      }
+                    />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-col gap-3 pt-2 border-t border-slate-100">
-            {agingBuckets.map((b) => (
-              <div key={b.bucket} className="flex flex-col gap-1">
-                <div className="flex justify-between text-xs tabular-nums">
-                  <span
-                    className={
-                      b.risk === 'danger' || b.risk === 'critical'
-                        ? 'text-[#B91C1C] font-medium'
-                        : 'text-[#475569]'
-                    }
-                  >
-                    {b.label}
-                  </span>
-                  <span className="font-medium text-[#0F172A]">
-                    ¥{b.amount.toFixed(1)}万 ({b.percent.toFixed(1)}%)
-                  </span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${b.percent}%`,
-                      backgroundColor: b.color,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+            {agingBuckets.map((b) => {
+              const isSelected = selectedBucket === b.bucket;
+              return (
+                <button
+                  key={b.bucket}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => toggleBucket(b.bucket)}
+                  className={`w-full text-left flex flex-col gap-1 rounded-lg px-2 py-1.5 transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#EFF6FF]/80 ring-1 ring-[#2563EB]/40'
+                      : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex justify-between text-xs tabular-nums">
+                    <span
+                      className={
+                        b.risk === 'danger' || b.risk === 'critical'
+                          ? 'text-[#B91C1C] font-medium'
+                          : 'text-[#475569]'
+                      }
+                    >
+                      {b.label} ({b.count}项)
+                    </span>
+                    <span className="font-medium text-[#0F172A]">
+                      ¥{b.amount.toFixed(1)}万 ({b.percent.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${b.percent}%`,
+                        backgroundColor: b.color,
+                      }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </article>
 
@@ -474,8 +619,8 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                             isHigh
                               ? 'text-[#047857]'
                               : isMid
-                              ? 'text-[#2563EB]'
-                              : 'text-[#B45309]'
+                                ? 'text-[#2563EB]'
+                                : 'text-[#B45309]'
                           }`}
                         >
                           {g.collectionRate.toFixed(1)}%
@@ -488,8 +633,8 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                           isHigh
                             ? 'bg-[#10B981]'
                             : isMid
-                            ? 'bg-[#3B82F6]'
-                            : 'bg-[#F59E0B]'
+                              ? 'bg-[#3B82F6]'
+                              : 'bg-[#F59E0B]'
                         }`}
                         style={{
                           width: `${Math.min(100, g.collectionRate)}%`,
@@ -504,7 +649,10 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
 
           <div className="rounded-xl bg-[#F8FAFC] border border-slate-200/80 p-3.5 flex items-center justify-between text-xs text-[#475569] tabular-nums">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" />
+              <CheckCircle2
+                className="w-4 h-4 text-[#10B981] shrink-0"
+                aria-hidden="true"
+              />
               <span>部门整体合同回款率</span>
             </div>
             <span className="font-bold text-[#0F172A]">
@@ -518,176 +666,304 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
 
       {/* Row 3: Receivables Tracking Detail Table */}
       <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+        <div className="px-6 py-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-[#0F172A]">
-              项目开票与回款跟踪明细表
-            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold text-[#0F172A]">
+                项目开票与回款跟踪明细表
+              </h2>
+              <span className="text-xs text-[#64748B] tabular-nums">
+                共 {sortedProjects.length} 个项目
+              </span>
+              {selectedBucket && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedBucket(null)}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#1D4ED8] text-[11px] font-medium cursor-pointer"
+                >
+                  <span>账龄：{selectedBucket}</span>
+                  <X className="w-3 h-3" aria-hidden="true" />
+                </button>
+              )}
+            </div>
             <p className="text-xs text-[#64748B] mt-0.5">
-              按最长逾期账龄降序排列，点击「收款/开票管理」可增删改单笔明细并实时重算账龄
+              按最长逾期账龄降序排列，点击任意行或「收款/开票管理」可增删改单笔明细并实时重算账龄
             </p>
           </div>
-          <span className="text-xs text-[#64748B] tabular-nums">
-            共 {sortedProjects.length} 个项目
-          </span>
+
+          <search
+            aria-label="回款明细表筛选"
+            className="flex flex-wrap items-center gap-2"
+          >
+            <button
+              type="button"
+              aria-pressed={onlyUncollected}
+              onClick={() => setOnlyUncollected((prev) => !prev)}
+              className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                onlyUncollected
+                  ? 'bg-[#FFFBEB] border-amber-300 text-[#B45309]'
+                  : 'bg-white border-slate-200 text-[#475569] hover:bg-slate-50'
+              }`}
+            >
+              仅看未结清 ({uncollectedProjectsCount})
+            </button>
+
+            <div className="relative">
+              <Search
+                className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                aria-label="搜索回款项目、客户或节点"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索项目、客户或收款节点..."
+                className="w-56 pl-8 pr-7 py-1.5 rounded-lg bg-[#F8FAFC] border border-slate-200 text-xs text-[#0F172A] placeholder:text-[#94A3B8] focus:bg-white transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  aria-label="清空回款搜索"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569] cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </search>
         </div>
 
-        <div className="w-full overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-labelledby={captionId}
+          className="w-full overflow-x-auto panel-scroll"
+        >
+          <table className="w-full min-w-[980px] border-collapse text-left">
+            <caption id={captionId} className="visually-hidden">
+              项目开票与回款跟踪明细表
+            </caption>
             <thead className="bg-[#F8FAFC] border-b border-slate-200/80">
               <tr>
-                <th className="px-5 py-3 text-xs font-medium text-[#64748B] whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-xs font-medium text-[#64748B] whitespace-nowrap"
+                >
                   项目与客户
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] whitespace-nowrap"
+                >
                   当前收款节点
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   合同额(万)
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   已开票(万)
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   已回款(万)
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   开票未回(万)
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   回款率
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   账龄
                 </th>
-                <th className="px-3 py-3 text-xs font-medium text-[#64748B] whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-3 py-3 text-xs font-medium text-[#64748B] whitespace-nowrap"
+                >
                   账龄状态
                 </th>
-                <th className="px-5 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap">
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-xs font-medium text-[#64748B] text-right whitespace-nowrap"
+                >
                   操作
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sortedProjects.map((p) => {
-                const uncollected = p.metrics.uncollectedReceivable;
-                const isOver60 = p.maxOverdueDays > 60 && uncollected > 0;
-                const isMid =
-                  p.maxOverdueDays > 30 &&
-                  p.maxOverdueDays <= 60 &&
-                  uncollected > 0;
-
-                return (
-                  <tr
-                    key={p.id}
-                    className="h-14 hover:bg-slate-50/80 transition-colors"
+              {sortedProjects.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={10}
+                    className="px-6 py-10 text-center text-xs text-[#64748B]"
                   >
-                    <td className="px-5 py-2.5 whitespace-nowrap">
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-semibold text-[#0F172A]">
-                          {p.name}
-                        </span>
-                        <span className="text-xs text-[#64748B]">
-                          {p.client} · {p.businessGroup}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-[#475569] whitespace-nowrap">
-                      {p.milestone}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-xs text-[#475569] tabular-nums whitespace-nowrap">
-                      {p.contractAmount.toFixed(1)}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-xs text-[#0F172A] tabular-nums whitespace-nowrap">
-                      {p.invoicedAmount.toFixed(1)}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-xs font-medium text-[#047857] tabular-nums whitespace-nowrap">
-                      {p.collectedAmount.toFixed(1)}
-                    </td>
-                    <td
-                      className={`px-3 py-2.5 text-right text-[13px] font-semibold tabular-nums whitespace-nowrap ${
-                        isOver60
-                          ? 'text-[#EF4444]'
-                          : uncollected > 0
-                          ? 'text-[#B45309]'
-                          : 'text-[#64748B]'
-                      }`}
-                    >
-                      {uncollected.toFixed(1)}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-xs font-medium text-[#0F172A] tabular-nums whitespace-nowrap">
-                      {p.metrics.collectionRate.toFixed(1)}%
-                    </td>
-                    <td
-                      className={`px-3 py-2.5 text-right text-xs font-medium tabular-nums whitespace-nowrap ${
-                        isOver60
-                          ? 'text-[#EF4444]'
-                          : isMid
-                          ? 'text-[#B45309]'
-                          : 'text-[#475569]'
-                      }`}
-                    >
-                      {uncollected > 0 ? `${p.maxOverdueDays} 天` : '—'}
-                    </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap">
-                      {uncollected === 0 ? (
-                        <span className="inline-flex px-2.5 py-0.5 rounded-full bg-slate-100 text-[#475569] text-xs font-medium">
-                          已结清
-                        </span>
-                      ) : isOver60 ? (
-                        <span className="inline-flex px-2.5 py-0.5 rounded-full bg-[#FEF2F2] text-[#B91C1C] text-xs font-medium">
-                          逾期催收
-                        </span>
-                      ) : isMid ? (
-                        <span className="inline-flex px-2.5 py-0.5 rounded-full bg-[#FFFBEB] text-[#B45309] text-xs font-medium">
-                          临期跟进
-                        </span>
-                      ) : (
-                        <span className="inline-flex px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] text-xs font-medium">
-                          账期内
-                        </span>
+                    <div className="flex flex-col items-center gap-2">
+                      <span>当前账龄或搜索条件下暂无匹配项目</span>
+                      {(selectedBucket || onlyUncollected || searchQuery) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedBucket(null);
+                            setOnlyUncollected(false);
+                            setSearchQuery('');
+                          }}
+                          className="px-3 py-1 rounded-lg bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] text-xs font-medium cursor-pointer"
+                        >
+                          重置回款筛选
+                        </button>
                       )}
-                    </td>
-                    <td className="px-5 py-2.5 text-right whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => openModal(p)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-medium text-[#2563EB] hover:bg-[#EFF6FF] hover:border-[#2563EB]/40 transition-colors cursor-pointer"
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                sortedProjects.map((p) => {
+                  const uncollected = p.metrics.uncollectedReceivable;
+                  const isOver60 = p.maxOverdueDays > 60 && uncollected > 0;
+                  const isMid =
+                    p.maxOverdueDays > 30 &&
+                    p.maxOverdueDays <= 60 &&
+                    uncollected > 0;
+
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => openModal(p)}
+                      className="h-14 hover:bg-slate-50/90 transition-colors cursor-pointer"
+                    >
+                      <td className="px-5 py-2.5 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-semibold text-[#0F172A]">
+                            {p.name}
+                          </span>
+                          <span className="text-xs text-[#64748B]">
+                            {p.client} · {p.businessGroup}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-[#475569] whitespace-nowrap">
+                        {p.milestone}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs text-[#475569] tabular-nums whitespace-nowrap">
+                        {p.contractAmount.toFixed(1)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs text-[#0F172A] tabular-nums whitespace-nowrap">
+                        {p.invoicedAmount.toFixed(1)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs font-medium text-[#047857] tabular-nums whitespace-nowrap">
+                        {p.collectedAmount.toFixed(1)}
+                      </td>
+                      <td
+                        className={`px-3 py-2.5 text-right text-[13px] font-semibold tabular-nums whitespace-nowrap ${
+                          isOver60
+                            ? 'text-[#EF4444]'
+                            : uncollected > 0
+                              ? 'text-[#B45309]'
+                              : 'text-[#64748B]'
+                        }`}
                       >
-                        <Receipt className="w-3 h-3" />
-                        <span>收款/开票管理 ({p.paymentRecords.length})</span>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                        {uncollected.toFixed(1)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs font-medium text-[#0F172A] tabular-nums whitespace-nowrap">
+                        {p.metrics.collectionRate.toFixed(1)}%
+                      </td>
+                      <td
+                        className={`px-3 py-2.5 text-right text-xs font-medium tabular-nums whitespace-nowrap ${
+                          isOver60
+                            ? 'text-[#EF4444]'
+                            : isMid
+                              ? 'text-[#B45309]'
+                              : 'text-[#475569]'
+                        }`}
+                      >
+                        {uncollected > 0 ? `${p.maxOverdueDays} 天` : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        {uncollected === 0 ? (
+                          <span className="inline-flex px-2.5 py-0.5 rounded-full bg-slate-100 text-[#475569] text-xs font-medium">
+                            已结清
+                          </span>
+                        ) : isOver60 ? (
+                          <span className="inline-flex px-2.5 py-0.5 rounded-full bg-[#FEF2F2] text-[#B91C1C] text-xs font-medium">
+                            逾期催收
+                          </span>
+                        ) : isMid ? (
+                          <span className="inline-flex px-2.5 py-0.5 rounded-full bg-[#FFFBEB] text-[#B45309] text-xs font-medium">
+                            临期跟进
+                          </span>
+                        ) : (
+                          <span className="inline-flex px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] text-xs font-medium">
+                            账期内
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className="px-5 py-2.5 text-right whitespace-nowrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openModal(p)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-medium text-[#2563EB] hover:bg-[#EFF6FF] hover:border-[#2563EB]/40 transition-colors cursor-pointer"
+                        >
+                          <Receipt className="w-3 h-3" aria-hidden="true" />
+                          <span>收款/开票管理 ({p.paymentRecords.length})</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* Full Billing & Collection Records Management Modal */}
-      {activeModalProject && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 backdrop-blur-[1px] p-4"
-          onClick={() => setModalProjectId(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="收款与开票明细管理"
-            className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {/* Full Billing & Collection Records Management Native Dialog */}
+      <ModalDialog
+        isOpen={activeModalProject !== null}
+        onClose={() => setModalProjectId(null)}
+        variant="modal"
+        maxWidth="44rem"
+        ariaLabelledBy={modalTitleId}
+        closedBy="any"
+        onBeforeCancel={handleBeforeModalCancel}
+      >
+        {displayModalProject && (
+          <>
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-base font-bold text-[#0F172A]">
+                <h1
+                  id={modalTitleId}
+                  className="text-base font-bold text-[#0F172A]"
+                >
                   收款 / 开票明细管理
-                </h3>
+                </h1>
                 <p className="text-xs text-[#64748B] mt-0.5 tabular-nums">
-                  {activeModalProject.code} · {activeModalProject.name} ·{' '}
-                  {activeModalProject.client}
+                  {displayModalProject.code} · {displayModalProject.name} ·{' '}
+                  {displayModalProject.client}
                 </p>
               </div>
               <button
@@ -696,44 +972,46 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                 onClick={() => setModalProjectId(null)}
                 className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-[#64748B] hover:bg-slate-100 hover:text-[#0F172A] cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto flex flex-col gap-5">
-              {/* Live Summary + Overdue Days Adjuster */}
+            <div className="p-6 overflow-y-auto panel-scroll flex flex-col gap-5">
+              {/* Live Summary Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-[#F8FAFC] border border-slate-200/80 p-3.5 text-xs tabular-nums">
                 <div>
                   <div className="text-[#64748B]">合同总额</div>
                   <div className="text-sm font-bold text-[#0F172A] mt-0.5">
-                    ¥{activeModalProject.contractAmount.toFixed(1)}万
+                    ¥{displayModalProject.contractAmount.toFixed(1)}万
                   </div>
                 </div>
                 <div>
                   <div className="text-[#64748B]">累计已开票</div>
                   <div className="text-sm font-bold text-[#2563EB] mt-0.5">
-                    ¥{activeModalProject.invoicedAmount.toFixed(1)}万
+                    ¥{displayModalProject.invoicedAmount.toFixed(1)}万
                   </div>
                 </div>
                 <div>
                   <div className="text-[#64748B]">累计已回款</div>
                   <div className="text-sm font-bold text-[#047857] mt-0.5">
-                    ¥{activeModalProject.collectedAmount.toFixed(1)}万
+                    ¥{displayModalProject.collectedAmount.toFixed(1)}万
                   </div>
                 </div>
                 <div>
                   <div className="text-[#64748B]">开票未回余额</div>
                   <div
                     className={`text-sm font-bold mt-0.5 ${
-                      activeModalProject.metrics.uncollectedReceivable > 0 &&
-                      activeModalProject.maxOverdueDays > 60
+                      displayModalProject.metrics.uncollectedReceivable > 0 &&
+                      displayModalProject.maxOverdueDays > 60
                         ? 'text-[#EF4444]'
-                        : 'text-[#B45309]'
+                        : displayModalProject.metrics.uncollectedReceivable > 0
+                          ? 'text-[#B45309]'
+                          : 'text-[#047857]'
                     }`}
                   >
                     ¥
-                    {activeModalProject.metrics.uncollectedReceivable.toFixed(1)}
+                    {displayModalProject.metrics.uncollectedReceivable.toFixed(1)}
                     万
                   </div>
                 </div>
@@ -746,31 +1024,56 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                     当前最长逾期天数调节
                   </span>
                   <span className="text-[11px] text-[#64748B]">
-                    更新后将同步影响「&gt;60天逾期高危应收」与账龄结构柱状图
+                    {displayModalProject.metrics.uncollectedReceivable <= 0
+                      ? '该项目应收款已全部结清，逾期账龄自动归零'
+                      : '更新后将同步影响「>60天逾期高危应收」与账龄结构柱状图'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     step="1"
+                    disabled={
+                      displayModalProject.metrics.uncollectedReceivable <= 0
+                    }
                     aria-label="当前最长逾期天数"
-                    value={overdueDraft}
+                    value={
+                      displayModalProject.metrics.uncollectedReceivable <= 0
+                        ? '0'
+                        : overdueDraft
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                        e.preventDefault();
+                        handleOverdueDaysSave();
+                      }
+                    }}
                     onChange={(e) => {
                       setOverdueDraft(e.target.value);
                       setOverdueError(null);
                     }}
-                    className={`w-20 px-2.5 py-1.5 rounded-lg border text-xs font-semibold text-right tabular-nums focus:outline-none focus:ring-2 ${
-                      overdueError
-                        ? 'border-[#EF4444] focus:ring-[#EF4444]/25'
-                        : 'border-slate-200 focus:ring-[#2563EB]/30 focus:border-[#2563EB]'
+                    className={`w-20 px-2.5 py-1.5 rounded-lg border text-xs font-semibold text-right tabular-nums ${
+                      displayModalProject.metrics.uncollectedReceivable <= 0
+                        ? 'border-slate-200 bg-slate-50 text-[#94A3B8] cursor-not-allowed'
+                        : overdueError
+                          ? 'border-[#EF4444]'
+                          : 'border-slate-200'
                     }`}
                   />
                   <span className="text-[#64748B]">天</span>
                   <button
                     type="button"
+                    disabled={
+                      displayModalProject.metrics.uncollectedReceivable <= 0
+                    }
                     onClick={handleOverdueDaysSave}
-                    className="px-3 py-1.5 rounded-lg bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-medium cursor-pointer"
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                      displayModalProject.metrics.uncollectedReceivable <= 0
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'bg-[#0F172A] hover:bg-slate-800 text-white cursor-pointer'
+                    }`}
                   >
                     更新账龄
                   </button>
@@ -784,37 +1087,62 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
 
               {/* Payment Records Stream Header */}
               <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-[#0F172A]">
-                    开票与回款单据流水 ({activeModalProject.paymentRecords.length}{' '}
-                    笔)
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddForm((prev) => !prev);
-                      setAddErrors({});
-                    }}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EFF6FF] text-[#2563EB] hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{showAddForm ? '收起录入表' : '新增开票/回款'}</span>
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-xs font-semibold text-[#0F172A]">
+                    开票与回款单据流水 (
+                    {displayModalProject.paymentRecords.length} 笔)
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {displayModalProject.metrics.uncollectedReceivable > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleOneClickSettle}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#ECFDF5] text-[#047857] hover:bg-emerald-100 border border-emerald-200/80 text-xs font-semibold transition-colors cursor-pointer tabular-nums"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>
+                          一键结清 ¥
+                          {displayModalProject.metrics.uncollectedReceivable.toFixed(
+                            1
+                          )}
+                          万
+                        </span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-expanded={showAddForm}
+                      onClick={() => {
+                        setShowAddForm((prev) => !prev);
+                        setAddErrors({});
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EFF6FF] text-[#2563EB] hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>{showAddForm ? '收起录入表' : '新增开票/回款'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Add Record Inline Form */}
                 {showAddForm && (
                   <form
+                    ref={addFormRef}
                     onSubmit={handleAddRecordSubmit}
                     noValidate
                     className="rounded-xl border border-blue-200 bg-[#F8FAFC] p-3.5 flex flex-col gap-3 text-xs"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      <label className="flex flex-col gap-1">
-                        <span className="text-[#475569] font-medium">
+                      <div className="flex flex-col gap-1">
+                        <label
+                          htmlFor={`${baseId}-new-type`}
+                          className="text-[#475569] font-medium"
+                        >
                           单据类型
-                        </span>
+                        </label>
                         <select
+                          id={`${baseId}-new-type`}
+                          name="type"
                           value={newType}
                           onChange={(e) => {
                             const nextT = e.target.value as PaymentRecordType;
@@ -827,21 +1155,44 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                 Math.floor(100 + Math.random() * 899)
                               )}`
                             );
+                            setNewNote(
+                              nextT === '开票'
+                                ? `${displayModalProject.milestone}开票登记`
+                                : `${displayModalProject.milestone}回款到账`
+                            );
+                            if (
+                              nextT === '回款' &&
+                              displayModalProject.metrics.uncollectedReceivable > 0
+                            ) {
+                              setNewAmount(
+                                String(
+                                  displayModalProject.metrics
+                                    .uncollectedReceivable
+                                )
+                              );
+                            }
                           }}
                           className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium"
                         >
                           <option value="回款">回款（资金到账）</option>
                           <option value="开票">开票（确认应收）</option>
                         </select>
-                      </label>
+                      </div>
 
-                      <label className="flex flex-col gap-1">
-                        <span className="text-[#475569] font-medium">
-                          发生日期 *
-                        </span>
+                      <div className="flex flex-col gap-1">
+                        <label
+                          htmlFor={`${baseId}-new-date`}
+                          className="text-[#475569] font-medium"
+                        >
+                          发生日期 <span aria-hidden="true">*</span>
+                        </label>
                         <input
+                          id={`${baseId}-new-date`}
+                          name="date"
                           type="date"
+                          required
                           value={newDate}
+                          aria-invalid={addErrors.date ? 'true' : undefined}
                           onChange={(e) => {
                             setNewDate(e.target.value);
                             setAddErrors((prev) => ({ ...prev, date: '' }));
@@ -853,17 +1204,25 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                             {addErrors.date}
                           </span>
                         )}
-                      </label>
+                      </div>
 
-                      <label className="flex flex-col gap-1">
-                        <span className="text-[#475569] font-medium">
-                          金额 (万元) *
-                        </span>
+                      <div className="flex flex-col gap-1">
+                        <label
+                          htmlFor={`${baseId}-new-amt`}
+                          className="text-[#475569] font-medium"
+                        >
+                          金额 (万元) <span aria-hidden="true">*</span>
+                        </label>
                         <input
+                          id={`${baseId}-new-amt`}
+                          name="amount"
                           type="number"
-                          step="0.1"
+                          inputMode="decimal"
+                          step="0.01"
+                          required
                           placeholder="如 36.0"
                           value={newAmount}
+                          aria-invalid={addErrors.amount ? 'true' : undefined}
                           onChange={(e) => {
                             setNewAmount(e.target.value);
                             setAddErrors((prev) => ({ ...prev, amount: '' }));
@@ -879,17 +1238,37 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                             {addErrors.amount}
                           </span>
                         )}
-                      </label>
+                      </div>
                     </div>
 
+                    {showOverCollectionHint && (
+                      <div className="rounded-lg bg-[#FFFBEB] border border-amber-200/80 px-3 py-1.5 text-[11px] text-[#B45309] tabular-nums">
+                        提示：本次录入回款 ¥{newAmtNum.toFixed(1)}万 高于当前开票未回余额 ¥
+                        {displayModalProject.metrics.uncollectedReceivable.toFixed(
+                          1
+                        )}
+                        万（如属预收款项可继续入账）。
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      <label className="flex flex-col gap-1">
-                        <span className="text-[#475569] font-medium">
-                          发票/水单号 *
-                        </span>
+                      <div className="flex flex-col gap-1">
+                        <label
+                          htmlFor={`${baseId}-new-vno`}
+                          className="text-[#475569] font-medium"
+                        >
+                          发票/水单号 <span aria-hidden="true">*</span>
+                        </label>
                         <input
+                          id={`${baseId}-new-vno`}
+                          name="voucherNo"
                           type="text"
+                          required
+                          autoCorrect="off"
+                          autoCapitalize="none"
+                          spellCheck={false}
                           value={newVoucherNo}
+                          aria-invalid={addErrors.voucherNo ? 'true' : undefined}
                           onChange={(e) => {
                             setNewVoucherNo(e.target.value);
                             setAddErrors((prev) => ({
@@ -908,16 +1287,23 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                             {addErrors.voucherNo}
                           </span>
                         )}
-                      </label>
+                      </div>
 
-                      <label className="sm:col-span-2 flex flex-col gap-1">
-                        <span className="text-[#475569] font-medium">
-                          收款节点 / 摘要 *
-                        </span>
+                      <div className="sm:col-span-2 flex flex-col gap-1">
+                        <label
+                          htmlFor={`${baseId}-new-note`}
+                          className="text-[#475569] font-medium"
+                        >
+                          收款节点 / 摘要 <span aria-hidden="true">*</span>
+                        </label>
                         <input
+                          id={`${baseId}-new-note`}
+                          name="note"
                           type="text"
+                          required
                           placeholder="如：上线初验款银行回单"
                           value={newNote}
+                          aria-invalid={addErrors.note ? 'true' : undefined}
                           onChange={(e) => {
                             setNewNote(e.target.value);
                             setAddErrors((prev) => ({ ...prev, note: '' }));
@@ -933,7 +1319,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                             {addErrors.note}
                           </span>
                         )}
-                      </label>
+                      </div>
                     </div>
 
                     <div className="flex justify-end gap-2">
@@ -959,12 +1345,12 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
 
                 {/* Records List */}
                 <div className="flex flex-col gap-2">
-                  {activeModalProject.paymentRecords.length === 0 ? (
+                  {displayModalProject.paymentRecords.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-xs text-[#64748B]">
                       暂无开票或回款记录，点击上方「新增开票/回款」录入
                     </div>
                   ) : (
-                    activeModalProject.paymentRecords.map((r) => {
+                    displayModalProject.paymentRecords.map((r) => {
                       const isEditing = editingRecordId === r.id;
                       const isConfirming = confirmDeleteRecordId === r.id;
 
@@ -972,6 +1358,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                         return (
                           <form
                             key={r.id}
+                            ref={editFormRef}
                             onSubmit={(e) => handleSaveEditRecord(e, r.id)}
                             noValidate
                             className="rounded-xl border border-blue-300 bg-[#F8FAFC] p-3 flex flex-col gap-2.5 text-xs"
@@ -982,6 +1369,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   类型
                                 </span>
                                 <select
+                                  name="type"
                                   value={editType}
                                   onChange={(e) =>
                                     setEditType(
@@ -1000,6 +1388,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   日期
                                 </span>
                                 <input
+                                  name="date"
                                   type="date"
                                   value={editDate}
                                   onChange={(e) => setEditDate(e.target.value)}
@@ -1012,9 +1401,14 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   金额 (万元)
                                 </span>
                                 <input
+                                  name="amount"
                                   type="number"
-                                  step="0.1"
+                                  inputMode="decimal"
+                                  step="0.01"
                                   value={editAmount}
+                                  aria-invalid={
+                                    editErrors.amount ? 'true' : undefined
+                                  }
                                   onChange={(e) =>
                                     setEditAmount(e.target.value)
                                   }
@@ -1038,8 +1432,15 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   单据号
                                 </span>
                                 <input
+                                  name="voucherNo"
                                   type="text"
+                                  autoCorrect="off"
+                                  autoCapitalize="none"
+                                  spellCheck={false}
                                   value={editVoucherNo}
+                                  aria-invalid={
+                                    editErrors.voucherNo ? 'true' : undefined
+                                  }
                                   onChange={(e) =>
                                     setEditVoucherNo(e.target.value)
                                   }
@@ -1057,8 +1458,12 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   摘要
                                 </span>
                                 <input
+                                  name="note"
                                   type="text"
                                   value={editNote}
+                                  aria-invalid={
+                                    editErrors.note ? 'true' : undefined
+                                  }
                                   onChange={(e) => setEditNote(e.target.value)}
                                   className="px-2 py-1 rounded-lg border border-slate-200 bg-white text-xs"
                                 />
@@ -1082,7 +1487,10 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                 type="submit"
                                 className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold cursor-pointer"
                               >
-                                <Check className="w-3.5 h-3.5" />
+                                <Check
+                                  className="w-3.5 h-3.5"
+                                  aria-hidden="true"
+                                />
                                 <span>保存</span>
                               </button>
                             </div>
@@ -1113,7 +1521,10 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                 {r.date}
                               </span>
                             </div>
-                            <p className="text-xs text-[#475569] truncate">
+                            <p
+                              title={r.note}
+                              className="text-xs text-[#475569] truncate"
+                            >
                               {r.note}
                             </p>
                           </div>
@@ -1127,7 +1538,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                               }`}
                             >
                               {r.type === '回款' ? '+' : ''}¥
-                              {r.amount.toFixed(1)}万
+                              {r.amount.toFixed(2)}万
                             </span>
 
                             {isConfirming ? (
@@ -1139,7 +1550,7 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   type="button"
                                   onClick={() => {
                                     onDeletePaymentRecord(
-                                      activeModalProject.id,
+                                      displayModalProject.id,
                                       r.id
                                     );
                                     setConfirmDeleteRecordId(null);
@@ -1165,7 +1576,10 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   onClick={() => startEditRecord(r)}
                                   className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-[#94A3B8] hover:text-[#2563EB] hover:bg-[#EFF6FF] transition-colors cursor-pointer"
                                 >
-                                  <Pencil className="w-3.5 h-3.5" />
+                                  <Pencil
+                                    className="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                  />
                                 </button>
                                 <button
                                   type="button"
@@ -1174,7 +1588,10 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                                   onClick={() => setConfirmDeleteRecordId(r.id)}
                                   className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-[#94A3B8] hover:text-[#EF4444] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2
+                                    className="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                  />
                                 </button>
                               </div>
                             )}
@@ -1198,9 +1615,9 @@ export const ReceivablesAging: React.FC<ReceivablesAgingProps> = ({
                 完成
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </ModalDialog>
     </div>
   );
 };

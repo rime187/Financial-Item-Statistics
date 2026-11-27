@@ -51,20 +51,20 @@ export function buildInitialPaymentRecords(
 
 /**
  * Recomputes invoicedAmount and collectedAmount directly from paymentRecords
- * to preserve single-source-of-truth ledger integrity.
+ * to preserve single-source-of-truth ledger integrity (2-decimal precision).
  */
 export function syncBillingFromRecords(project: Project): Project {
-  const invoicedAmount = round1(
+  const invoicedAmount = round2(
     project.paymentRecords
       .filter((r) => r.type === '开票')
       .reduce((sum, r) => sum + r.amount, 0)
   );
-  const collectedAmount = round1(
+  const collectedAmount = round2(
     project.paymentRecords
       .filter((r) => r.type === '回款')
       .reduce((sum, r) => sum + r.amount, 0)
   );
-  const uncollected = Math.max(0, invoicedAmount - collectedAmount);
+  const uncollected = round2(Math.max(0, invoicedAmount - collectedAmount));
 
   return {
     ...project,
@@ -175,11 +175,21 @@ export interface ProjectFormInput {
 
 export function validateProjectForm(
   input: ProjectFormInput,
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit',
+  existingCodes?: string[]
 ): ValidationResult {
   const errors: Record<string, string> = {};
 
-  if (!input.code.trim()) errors.code = '请填写项目编号';
+  const trimmedCode = input.code.trim();
+  if (!trimmedCode) {
+    errors.code = '请填写项目编号';
+  } else if (
+    existingCodes?.some(
+      (c) => c.trim().toLowerCase() === trimmedCode.toLowerCase()
+    )
+  ) {
+    errors.code = '该项目编号已存在，请使用唯一编号';
+  }
   if (!input.name.trim()) errors.name = '请填写项目名称';
   if (!input.manager.trim()) errors.manager = '请填写项目负责人';
 
@@ -424,6 +434,45 @@ export function deleteVoucherFromProject(
   );
 }
 
+export function restoreVoucherAtIndex(
+  projects: Project[],
+  projectId: string,
+  voucher: CostVoucher,
+  index: number
+): Project[] {
+  return projects.map((p) => {
+    if (p.id !== projectId) return p;
+    if (p.vouchers.some((v) => v.id === voucher.id)) return p;
+    const clampedIdx = Math.max(0, Math.min(p.vouchers.length, index));
+    const next = [...p.vouchers];
+    next.splice(clampedIdx, 0, voucher);
+    return { ...p, vouchers: next };
+  });
+}
+
+export function getDefaultVoucherMetaForCategory(category: CostCategory): {
+  source: VoucherSource;
+  taxRate: string;
+} {
+  switch (category) {
+    case '人工工时':
+      return { source: 'HR', taxRate: '0' };
+    case '软硬件采购':
+      return { source: 'ERP', taxRate: '13' };
+    case '外包技术':
+      return { source: 'OA', taxRate: '6' };
+    case '差旅实施':
+      return { source: 'OA', taxRate: '6' };
+  }
+}
+
+export function calcTaxInclusiveAmount(
+  amountExclTax: number,
+  taxRate: number
+): number {
+  return round2(amountExclTax * (1 + taxRate / 100));
+}
+
 export function addPaymentRecordToProject(
   projects: Project[],
   projectId: string,
@@ -479,6 +528,28 @@ export function deletePaymentRecordFromProject(
     return syncBillingFromRecords({
       ...p,
       paymentRecords: p.paymentRecords.filter((r) => r.id !== recordId),
+    });
+  });
+}
+
+export function restorePaymentRecordAtIndex(
+  projects: Project[],
+  projectId: string,
+  record: PaymentRecord,
+  index: number,
+  previousOverdueDays?: number
+): Project[] {
+  return projects.map((p) => {
+    if (p.id !== projectId) return p;
+    if (p.paymentRecords.some((r) => r.id === record.id)) return p;
+    const clampedIdx = Math.max(0, Math.min(p.paymentRecords.length, index));
+    const next = [...p.paymentRecords];
+    next.splice(clampedIdx, 0, record);
+    return syncBillingFromRecords({
+      ...p,
+      maxOverdueDays:
+        previousOverdueDays !== undefined ? previousOverdueDays : p.maxOverdueDays,
+      paymentRecords: next,
     });
   });
 }

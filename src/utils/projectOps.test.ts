@@ -5,12 +5,16 @@ import { calcPortfolioSummary, calcProjectMetrics, enrichProjects } from './fina
 import {
   addPaymentRecordToProject,
   addVoucherToProject,
+  calcTaxInclusiveAmount,
   deletePaymentRecordFromProject,
   deleteVoucherFromProject,
   duplicateProjectRecord,
   generateNextProjectCode,
+  getDefaultVoucherMetaForCategory,
   normalizeProject,
+  restorePaymentRecordAtIndex,
   restoreProjectAtIndex,
+  restoreVoucherAtIndex,
   updatePaymentRecordInProject,
   updateProjectFields,
   updateVoucherInProject,
@@ -18,6 +22,7 @@ import {
   validateProjectForm,
   validateVoucherForm,
 } from './projectOps';
+import { importProjectsFromCsvText } from './csv';
 
 test('voucher add/edit/delete dynamically flips project over-budget status', () => {
   // prj-009: approvedBudget=260, actualCost=210 (normal -> not over budget)
@@ -215,4 +220,81 @@ test('normalizeProject upgrades legacy project without paymentRecords cleanly', 
   assert.equal(norm.paymentRecords.length, 2);
   assert.equal(norm.invoicedAmount, INITIAL_MOCK_PROJECTS[0].invoicedAmount);
   assert.equal(norm.collectedAmount, INITIAL_MOCK_PROJECTS[0].collectedAmount);
+});
+
+test('billing sync preserves 2-decimal precision and supports undo restoration for vouchers and payments', () => {
+  const base = INITIAL_MOCK_PROJECTS;
+  const { projects: addedPay, created: payRec } = addPaymentRecordToProject(
+    base,
+    'prj-001',
+    {
+      date: '2026-11-26',
+      type: '回款',
+      amount: 12.35,
+      voucherNo: 'HK-2611-901',
+      note: '分批到账',
+    }
+  );
+  const p = addedPay.find((item) => item.id === 'prj-001')!;
+  assert.equal(p.collectedAmount, 104.35);
+
+  const afterDelPay = deletePaymentRecordFromProject(addedPay, 'prj-001', payRec.id);
+  assert.equal(afterDelPay.find((item) => item.id === 'prj-001')!.collectedAmount, 92);
+
+  const restoredPay = restorePaymentRecordAtIndex(afterDelPay, 'prj-001', payRec, 0, 42);
+  assert.equal(restoredPay.find((item) => item.id === 'prj-001')!.collectedAmount, 104.35);
+
+  const targetVoucher = base[0].vouchers[0];
+  const afterDelVoucher = deleteVoucherFromProject(base, 'prj-001', targetVoucher.id);
+  const restoredVoucher = restoreVoucherAtIndex(afterDelVoucher, 'prj-001', targetVoucher, 0);
+  assert.equal(restoredVoucher[0].vouchers[0].id, targetVoucher.id);
+
+  assert.deepEqual(getDefaultVoucherMetaForCategory('软硬件采购'), {
+    source: 'ERP',
+    taxRate: '13',
+  });
+  assert.equal(calcTaxInclusiveAmount(10, 13), 11.3);
+});
+
+test('duplicate project code validation and safe partial CSV import preserve existing vouchers', () => {
+  const dupCheck = validateProjectForm(
+    {
+      code: 'prj-2026-001',
+      name: '测试项目',
+      client: '客户',
+      milestone: '首款',
+      businessGroup: '智慧能源组',
+      manager: '张三',
+      stage: '实施中',
+      contractAmount: '100',
+      approvedBudget: '80',
+      progress: '20',
+      invoicedAmount: '0',
+      collectedAmount: '0',
+      maxOverdueDays: '0',
+      laborCost: '0',
+      procurementCost: '0',
+      outsourcingCost: '0',
+      travelCost: '0',
+    },
+    'create',
+    INITIAL_MOCK_PROJECTS.map((p) => p.code)
+  );
+  assert.equal(dupCheck.valid, false);
+  assert.ok(dupCheck.errors.code);
+
+  // Partial CSV update with blank category columns must NOT wipe existing vouchers
+  const csv = [
+    '项目编号,项目名称,合同额(万),核定预算(万),人工工时(万),软硬件采购(万),外包技术(万),差旅实施(万)',
+    'PRJ-2026-001,智慧园区能耗碳排监测大屏-更新,300,200,,,,',
+    'PRJ-BAD,无效预算项目,100,0,,,,',
+  ].join('\r\n');
+
+  const res = importProjectsFromCsvText(csv, INITIAL_MOCK_PROJECTS);
+  assert.equal(res.updatedCount, 1);
+  assert.equal(res.skippedCount, 1);
+  assert.equal(res.skippedReasons.length, 1);
+  const updated = res.projects.find((p) => p.code === 'PRJ-2026-001')!;
+  assert.equal(updated.name, '智慧园区能耗碳排监测大屏-更新');
+  assert.equal(updated.vouchers.length, INITIAL_MOCK_PROJECTS[0].vouchers.length);
 });

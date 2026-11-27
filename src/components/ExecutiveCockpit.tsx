@@ -33,9 +33,13 @@ import { KpiTrendModal } from './KpiTrendModal';
 
 interface ExecutiveCockpitProps {
   projects: EnrichedProject[];
+  activeBusinessGroup: string;
+  onSelectBusinessGroup: (group: string) => void;
   onInspectProject: (projectId: string) => void;
   onNavigateTab: (tab: TabId) => void;
 }
+
+type Top8SortMode = 'budget' | 'overrun' | 'contract';
 
 function shortProjectName(name: string): string {
   return name.length > 8 ? `${name.slice(0, 8)}…` : name;
@@ -43,12 +47,16 @@ function shortProjectName(name: string): string {
 
 export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
   projects,
+  activeBusinessGroup,
+  onSelectBusinessGroup,
   onInspectProject,
   onNavigateTab,
 }) => {
   const summary = useMemo(() => calcPortfolioSummary(projects), [projects]);
   const [activeTrendMetric, setActiveTrendMetric] =
     useState<KpiMetricId | null>(null);
+  const [top8SortMode, setTop8SortMode] = useState<Top8SortMode>('budget');
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   const activeTrendConfig = useMemo(
     () =>
@@ -59,21 +67,30 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
   );
 
   const top8ChartData = useMemo(() => {
-    return [...projects]
-      .sort((a, b) => b.approvedBudget - a.approvedBudget)
-      .slice(0, 8)
-      .map((p) => ({
-        id: p.id,
-        shortName: shortProjectName(p.name),
-        fullName: p.name,
-        code: p.code,
-        approvedBudget: round1(p.approvedBudget),
-        actualCost: round1(p.metrics.actualCost),
-        collectedAmount: round1(p.collectedAmount),
-        grossMargin: round1(p.metrics.grossMargin),
-        isOverBudget: p.metrics.isOverBudget,
-      }));
-  }, [projects]);
+    const sorted = [...projects].sort((a, b) => {
+      if (top8SortMode === 'overrun') {
+        const overA = a.metrics.actualCost - a.approvedBudget;
+        const overB = b.metrics.actualCost - b.approvedBudget;
+        return overB - overA;
+      }
+      if (top8SortMode === 'contract') {
+        return b.contractAmount - a.contractAmount;
+      }
+      return b.approvedBudget - a.approvedBudget;
+    });
+
+    return sorted.slice(0, 8).map((p) => ({
+      id: p.id,
+      shortName: shortProjectName(p.name),
+      fullName: p.name,
+      code: p.code,
+      approvedBudget: round1(p.approvedBudget),
+      actualCost: round1(p.metrics.actualCost),
+      collectedAmount: round1(p.collectedAmount),
+      grossMargin: round1(p.metrics.grossMargin),
+      isOverBudget: p.metrics.isOverBudget,
+    }));
+  }, [projects, top8SortMode]);
 
   const { barYMax, barYTicks } = useMemo(() => {
     let rawMax = 0;
@@ -96,7 +113,7 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
 
   const donutData = useMemo(() => {
     const total = summary.totalActualCost || 1;
-    const items = [
+    return [
       {
         name: '人工工时',
         value: round1(summary.categoryTotals.labor),
@@ -122,8 +139,12 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
         color: CATEGORY_COLORS['差旅实施'],
       },
     ];
-    return items;
   }, [summary]);
+
+  const activeDonutItem = useMemo(
+    () => donutData.find((d) => d.name === hoveredCategory) ?? null,
+    [donutData, hoveredCategory]
+  );
 
   const groupMetrics = useMemo(
     () => calcBusinessGroupMetrics(projects),
@@ -161,10 +182,16 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
           (p.maxOverdueDays > 60 && p.metrics.uncollectedReceivable > 0)
       )
       .sort((a, b) => {
-        if (a.metrics.healthStatus === '超支' && b.metrics.healthStatus !== '超支') {
+        if (
+          a.metrics.healthStatus === '超支' &&
+          b.metrics.healthStatus !== '超支'
+        ) {
           return -1;
         }
-        if (a.metrics.healthStatus !== '超支' && b.metrics.healthStatus === '超支') {
+        if (
+          a.metrics.healthStatus !== '超支' &&
+          b.metrics.healthStatus === '超支'
+        ) {
           return 1;
         }
         return b.metrics.budgetConsumptionRate - a.metrics.budgetConsumptionRate;
@@ -180,58 +207,57 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Row 1: 5 Equal-Width KPI Cards with Unified Vertical Baseline & Trend Trigger */}
+      {/* Row 1: 5 Equal-Width Accessible KPI Cards with Trend Modal Trigger */}
       <section
         aria-label="核心财务指标"
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 items-stretch"
       >
         {/* KPI 1: 立项合同总额 */}
-        <article
+        <button
+          type="button"
           onClick={() => setActiveTrendMetric('contract')}
-          className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-300/80 hover:shadow-[0_10px_24px_-8px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.99]"
+          aria-label={`立项合同总额 ¥${Math.round(summary.totalContract).toLocaleString('zh-CN')}万，点击查看近6个月波动趋势`}
+          className="group text-left bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-300/80 hover:shadow-[0_10px_24px_-8px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.99]"
         >
-          <div className="h-9 flex items-center justify-between gap-2">
+          <div className="h-9 w-full flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-[#475569] whitespace-nowrap">
               立项合同总额
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
-              <FileText className="w-4 h-4" />
+              <FileText className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <p className="mt-3 text-[26px] xl:text-[28px] leading-9 font-bold tracking-tight text-[#0F172A] tabular-nums whitespace-nowrap">
             ¥{Math.round(summary.totalContract).toLocaleString('zh-CN')}万
           </p>
-          <div className="mt-auto pt-3 flex items-center justify-between gap-1.5">
+          <div className="mt-auto pt-3 w-full flex items-center justify-between gap-1.5">
             <span className="text-[11px] xl:text-xs text-[#64748B] tabular-nums whitespace-nowrap truncate min-w-0">
               覆盖 {summary.projectCount} 个项目 · 开票{' '}
               {summary.overallInvoicedRate.toFixed(1)}%
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTrendMetric('contract');
-              }}
-              aria-label="查看立项合同总额近6个月趋势图"
-              title="查看趋势图"
-              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#2563EB] group-hover:bg-[#EFF6FF] group-hover:border-blue-200 cursor-pointer"
+            <span
+              aria-hidden="true"
+              title="点击查看近6个月趋势图"
+              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#2563EB] group-hover:bg-[#EFF6FF] group-hover:border-blue-200"
             >
               <Activity className="w-3.5 h-3.5" />
-            </button>
+            </span>
           </div>
-        </article>
+        </button>
 
         {/* KPI 2: 预算消耗率 */}
-        <article
+        <button
+          type="button"
           onClick={() => setActiveTrendMetric('budgetRate')}
-          className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_10px_24px_-8px_rgba(99,102,241,0.14)] active:translate-y-0 active:scale-[0.99]"
+          aria-label={`预算消耗率 ${summary.overallBudgetConsumptionRate.toFixed(1)}%，点击查看近6个月波动趋势`}
+          className="group text-left bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_10px_24px_-8px_rgba(99,102,241,0.14)] active:translate-y-0 active:scale-[0.99]"
         >
-          <div className="h-9 flex items-center justify-between gap-2">
+          <div className="h-9 w-full flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-[#475569] whitespace-nowrap">
               预算消耗率
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
-              <PieChartIcon className="w-4 h-4" />
+              <PieChartIcon className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <p
@@ -255,42 +281,39 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
               />
             )}
           </div>
-          <div className="mt-auto pt-2 flex items-center justify-between gap-1.5">
+          <div className="mt-auto pt-2 w-full flex items-center justify-between gap-1.5">
             <span className="text-[11px] xl:text-xs text-[#64748B] tabular-nums whitespace-nowrap truncate min-w-0">
               已发¥{Math.round(summary.totalActualCost).toLocaleString('zh-CN')}
               万 / 预算¥{Math.round(summary.totalBudget).toLocaleString('zh-CN')}
               万
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTrendMetric('budgetRate');
-              }}
-              aria-label="查看预算消耗率近6个月趋势图"
-              title="查看趋势图"
-              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#6366F1] group-hover:bg-[#EEF2FF] group-hover:border-indigo-200 cursor-pointer"
+            <span
+              aria-hidden="true"
+              title="点击查看近6个月趋势图"
+              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#6366F1] group-hover:bg-[#EEF2FF] group-hover:border-indigo-200"
             >
               <Activity className="w-3.5 h-3.5" />
-            </button>
+            </span>
           </div>
-        </article>
+        </button>
 
         {/* KPI 3: 确认收入毛利率 */}
-        <article
+        <button
+          type="button"
           onClick={() => setActiveTrendMetric('grossMargin')}
-          className={`group bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] ${
+          aria-label={`确认收入毛利率 ${summary.overallGrossMargin.toFixed(1)}%，点击查看近6个月波动趋势`}
+          className={`group text-left bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] ${
             isGrossMarginHealthy
               ? 'hover:border-emerald-300/80 hover:shadow-[0_10px_24px_-8px_rgba(16,185,129,0.14)]'
               : 'hover:border-amber-300/80 hover:shadow-[0_10px_24px_-8px_rgba(245,158,11,0.15)]'
           }`}
         >
-          <div className="h-9 flex items-center justify-between gap-2">
+          <div className="h-9 w-full flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-[#475569] whitespace-nowrap">
               确认收入毛利率
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] text-[#10B981] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
-              <TrendingUp className="w-4 h-4" />
+              <TrendingUp className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <p
@@ -300,100 +323,89 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
           >
             {summary.overallGrossMargin.toFixed(1)}%
           </p>
-          <div className="mt-auto pt-3 flex items-center justify-between gap-1.5">
+          <div className="mt-auto pt-3 w-full flex items-center justify-between gap-1.5">
             <span className="text-[11px] xl:text-xs text-[#64748B] tabular-nums whitespace-nowrap truncate min-w-0">
               毛利 ¥{summary.totalGrossProfit.toFixed(1)}万 (目标 ≥32%)
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTrendMetric('grossMargin');
-              }}
-              aria-label="查看确认收入毛利率近6个月趋势图"
-              title="查看趋势图"
-              className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 cursor-pointer ${
+            <span
+              aria-hidden="true"
+              title="点击查看近6个月趋势图"
+              className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 ${
                 isGrossMarginHealthy
                   ? 'group-hover:text-[#10B981] group-hover:bg-[#ECFDF5] group-hover:border-emerald-200'
                   : 'group-hover:text-[#D97706] group-hover:bg-[#FFFBEB] group-hover:border-amber-200'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-            </button>
+            </span>
           </div>
-        </article>
+        </button>
 
         {/* KPI 4: 回款率 & 应收 */}
-        <article
+        <button
+          type="button"
           onClick={() => setActiveTrendMetric('collectionRate')}
-          className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-amber-300/80 hover:shadow-[0_10px_24px_-8px_rgba(245,158,11,0.15)] active:translate-y-0 active:scale-[0.99]"
+          aria-label={`回款率 ${summary.overallCollectionRate.toFixed(1)}%，点击查看近6个月波动趋势`}
+          className="group text-left bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-amber-300/80 hover:shadow-[0_10px_24px_-8px_rgba(245,158,11,0.15)] active:translate-y-0 active:scale-[0.99]"
         >
-          <div className="h-9 flex items-center justify-between gap-2">
+          <div className="h-9 w-full flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-[#475569] whitespace-nowrap">
               回款率 & 应收
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#FFFBEB] text-[#F59E0B] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
-              <Wallet className="w-4 h-4" />
+              <Wallet className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <p className="mt-3 text-[26px] xl:text-[28px] leading-9 font-bold tracking-tight text-[#0F172A] tabular-nums whitespace-nowrap">
             {summary.overallCollectionRate.toFixed(1)}%
           </p>
-          <div className="mt-auto pt-3 flex items-center justify-between gap-1.5">
+          <div className="mt-auto pt-3 w-full flex items-center justify-between gap-1.5">
             <span className="text-[11px] xl:text-xs text-[#64748B] tabular-nums whitespace-nowrap truncate min-w-0">
               已回 ¥{Math.round(summary.totalCollected).toLocaleString('zh-CN')}万 ·
               未回 ¥{Math.round(summary.totalUncollected).toLocaleString('zh-CN')}万
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTrendMetric('collectionRate');
-              }}
-              aria-label="查看回款率与应收近6个月趋势图"
-              title="查看趋势图"
-              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#D97706] group-hover:bg-[#FFFBEB] group-hover:border-amber-200 cursor-pointer"
+            <span
+              aria-hidden="true"
+              title="点击查看近6个月趋势图"
+              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#D97706] group-hover:bg-[#FFFBEB] group-hover:border-amber-200"
             >
               <Activity className="w-3.5 h-3.5" />
-            </button>
+            </span>
           </div>
-        </article>
+        </button>
 
         {/* KPI 5: 异常预警项目 */}
-        <article
+        <button
+          type="button"
           onClick={() => setActiveTrendMetric('alertCount')}
-          className="group bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-red-300/80 hover:shadow-[0_10px_24px_-8px_rgba(239,68,68,0.14)] active:translate-y-0 active:scale-[0.99]"
+          aria-label={`异常预警项目 ${summary.alertCount} 个，点击查看近6个月波动趋势`}
+          className="group text-left bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 xl:p-5 flex flex-col cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-red-300/80 hover:shadow-[0_10px_24px_-8px_rgba(239,68,68,0.14)] active:translate-y-0 active:scale-[0.99]"
         >
-          <div className="h-9 flex items-center justify-between gap-2">
+          <div className="h-9 w-full flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-[#475569] whitespace-nowrap">
               异常预警项目
             </span>
             <div className="w-9 h-9 rounded-xl bg-[#FEF2F2] text-[#EF4444] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <p className="mt-3 text-[26px] xl:text-[28px] leading-9 font-bold tracking-tight text-[#EF4444] tabular-nums whitespace-nowrap">
             {summary.alertCount} 个
           </p>
-          <div className="mt-auto pt-3 flex items-center justify-between gap-1.5">
+          <div className="mt-auto pt-3 w-full flex items-center justify-between gap-1.5">
             <span className="text-[11px] xl:text-xs text-[#64748B] tabular-nums whitespace-nowrap truncate min-w-0">
               超支 {summary.overrunCount} 个 · 逾期&gt;60天 ¥
               {Math.round(summary.overdue60PlusAmount).toLocaleString('zh-CN')}万
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTrendMetric('alertCount');
-              }}
-              aria-label="查看异常预警项目近6个月趋势图"
-              title="查看趋势图"
-              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#EF4444] group-hover:bg-[#FEF2F2] group-hover:border-red-200 cursor-pointer"
+            <span
+              aria-hidden="true"
+              title="点击查看近6个月趋势图"
+              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-slate-400 bg-slate-50/90 border border-slate-200/70 transition-all duration-200 group-hover:text-[#EF4444] group-hover:bg-[#FEF2F2] group-hover:border-red-200"
             >
               <Activity className="w-3.5 h-3.5" />
-            </button>
+            </span>
           </div>
-        </article>
+        </button>
       </section>
 
       {/* Row 2: 64% / 36% Grid (Bar Comparison + Cost Donut) */}
@@ -409,9 +421,38 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                 直观识别「高投入低回款」与「成本突破预算红线」项目 · 点击任意项目柱子可直接穿透核查
               </p>
             </div>
-            <span className="text-xs font-medium text-[#64748B] whitespace-nowrap">
-              单位：万元 (RMB)
-            </span>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div
+                role="group"
+                aria-label="Top 8 排序口径"
+                className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/70 text-[11px]"
+              >
+                {(
+                  [
+                    { id: 'budget', label: '按预算' },
+                    { id: 'overrun', label: '按超支额' },
+                    { id: 'contract', label: '按合同额' },
+                  ] as const
+                ).map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    aria-pressed={top8SortMode === mode.id}
+                    onClick={() => setTop8SortMode(mode.id)}
+                    className={`px-2 py-1 rounded-md font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                      top8SortMode === mode.id
+                        ? 'bg-white text-[#0F172A] shadow-2xs'
+                        : 'text-[#64748B] hover:text-[#0F172A]'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-medium text-[#64748B] whitespace-nowrap">
+                单位：万元
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-xs text-[#475569]">
@@ -585,14 +626,14 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
           )}
         </article>
 
-        {/* Right Card (~35% -> 4/12): Large Thick Donut Chart + Strict 2x2 Legend */}
+        {/* Right Card (~35% -> 4/12): Large Thick Donut Chart + Interactive 2x2 Legend */}
         <article className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 flex flex-col justify-between gap-5">
           <div className="flex flex-col gap-1">
             <h2 className="text-base font-semibold text-[#0F172A]">
               总成本科目构成拆解
             </h2>
             <p className="text-xs text-[#64748B]">
-              人工工时、软硬件采购、外包服务与差旅实施占比
+              悬浮环块或下方图例可查看单项发生额与占比
             </p>
           </div>
 
@@ -615,10 +656,24 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                       stroke="#FFFFFF"
                       strokeWidth={3}
                       isAnimationActive={false}
+                      onMouseEnter={(_, index) => {
+                        const item = donutData[index];
+                        if (item) setHoveredCategory(item.name);
+                      }}
+                      onMouseLeave={() => setHoveredCategory(null)}
                     >
-                      {donutData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
+                      {donutData.map((entry) => {
+                        const dimmed =
+                          hoveredCategory !== null &&
+                          hoveredCategory !== entry.name;
+                        return (
+                          <Cell
+                            key={entry.name}
+                            fill={entry.color}
+                            fillOpacity={dimmed ? 0.35 : 1}
+                          />
+                        );
+                      })}
                     </Pie>
                     <Tooltip
                       content={({ active, payload }) => {
@@ -638,18 +693,37 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xs font-medium text-[#64748B]">
-                    累计总成本
-                  </span>
-                  <span className="text-[20px] leading-7 font-bold text-[#0F172A] tabular-nums mt-0.5">
-                    ¥
-                    {summary.totalActualCost.toLocaleString('zh-CN', {
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: 1,
-                    })}
-                    万
-                  </span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
+                  {activeDonutItem ? (
+                    <>
+                      <span
+                        className="text-xs font-semibold"
+                        style={{ color: activeDonutItem.color }}
+                      >
+                        {activeDonutItem.name}
+                      </span>
+                      <span className="text-[20px] leading-7 font-bold text-[#0F172A] tabular-nums mt-0.5">
+                        ¥{activeDonutItem.value.toFixed(1)}万
+                      </span>
+                      <span className="text-[11px] text-[#64748B] tabular-nums">
+                        占比 {activeDonutItem.percent}%
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs font-medium text-[#64748B]">
+                        累计总成本
+                      </span>
+                      <span className="text-[20px] leading-7 font-bold text-[#0F172A] tabular-nums mt-0.5">
+                        ¥
+                        {summary.totalActualCost.toLocaleString('zh-CN', {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })}
+                        万
+                      </span>
+                    </>
+                  )}
                 </div>
               </>
             ) : (
@@ -657,28 +731,35 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
             )}
           </div>
 
-          {/* Strict Non-Wrapping 2x2 Grid Legend */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3 pt-4 border-t border-slate-100">
-            {donutData.map((item) => (
-              <div
-                key={item.name}
-                className="flex items-center justify-between gap-2 min-w-0 whitespace-nowrap"
-                title={`${item.name}：¥${item.value.toFixed(1)}万`}
-              >
-                <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs text-[#475569] whitespace-nowrap">
-                    {item.name}
+          {/* Strict Non-Wrapping 2x2 Grid Legend with Hover Highlight */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-3 border-t border-slate-100">
+            {donutData.map((item) => {
+              const isHighlighted = hoveredCategory === item.name;
+              return (
+                <div
+                  key={item.name}
+                  onMouseEnter={() => setHoveredCategory(item.name)}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                  className={`flex items-center justify-between gap-2 min-w-0 whitespace-nowrap rounded-lg px-2 py-1.5 transition-colors cursor-default ${
+                    isHighlighted ? 'bg-slate-100/90' : 'hover:bg-slate-50'
+                  }`}
+                  title={`${item.name}：¥${item.value.toFixed(1)}万 (${item.percent}%)`}
+                >
+                  <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-xs text-[#475569] whitespace-nowrap">
+                      {item.name}
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-[#0F172A] tabular-nums shrink-0 whitespace-nowrap">
+                    {item.percent}%
                   </span>
                 </div>
-                <span className="text-xs font-semibold text-[#0F172A] tabular-nums shrink-0 whitespace-nowrap">
-                  {item.percent}%
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </article>
       </section>
@@ -687,13 +768,24 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* Left Card (5/12 -> ~42%): Composed Chart */}
         <article className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-base font-semibold text-[#0F172A]">
-              各业务组毛利贡献与预算偏差
-            </h2>
-            <p className="text-xs text-[#64748B]">
-              横向对比部门内各小组产值、实际成本与毛利率表现
-            </p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-base font-semibold text-[#0F172A]">
+                各业务组毛利贡献与预算偏差
+              </h2>
+              <p className="text-xs text-[#64748B]">
+                横向对比产值、成本与毛利率 · 点击柱子可联动筛选业务组
+              </p>
+            </div>
+            {activeBusinessGroup !== 'all' && (
+              <button
+                type="button"
+                onClick={() => onSelectBusinessGroup('all')}
+                className="px-2 py-1 rounded-md bg-[#EFF6FF] text-[#2563EB] hover:bg-blue-100 text-[11px] font-medium whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                清除组筛选
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-xs text-[#475569]">
@@ -795,6 +887,11 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                                 {g.grossMargin.toFixed(1)}%
                               </span>
                             </div>
+                            <div className="pt-1 mt-1 border-t border-slate-100 text-[11px] text-[#2563EB] font-medium">
+                              {activeBusinessGroup === g.group
+                                ? '点击恢复查看全部业务组'
+                                : '点击仅查看该业务组 →'}
+                            </div>
                           </div>
                         </div>
                       );
@@ -808,6 +905,15 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                     radius={[4, 4, 0, 0]}
                     maxBarSize={24}
                     isAnimationActive={false}
+                    cursor="pointer"
+                    onClick={(data) => {
+                      const grp = (data?.payload as { group?: string } | undefined)?.group;
+                      if (typeof grp === 'string') {
+                        onSelectBusinessGroup(
+                          activeBusinessGroup === grp ? 'all' : grp
+                        );
+                      }
+                    }}
                   />
                   <Bar
                     yAxisId="left"
@@ -817,6 +923,15 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                     radius={[4, 4, 0, 0]}
                     maxBarSize={24}
                     isAnimationActive={false}
+                    cursor="pointer"
+                    onClick={(data) => {
+                      const grp = (data?.payload as { group?: string } | undefined)?.group;
+                      if (typeof grp === 'string') {
+                        onSelectBusinessGroup(
+                          activeBusinessGroup === grp ? 'all' : grp
+                        );
+                      }
+                    }}
                   />
                   <Line
                     yAxisId="right"
@@ -825,7 +940,12 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                     name="毛利率(%)"
                     stroke="#10B981"
                     strokeWidth={2.5}
-                    dot={{ r: 4, fill: '#FFFFFF', stroke: '#10B981', strokeWidth: 2 }}
+                    dot={{
+                      r: 4,
+                      fill: '#FFFFFF',
+                      stroke: '#10B981',
+                      strokeWidth: 2,
+                    }}
                     activeDot={{ r: 5 }}
                     isAnimationActive={false}
                   />
@@ -851,11 +971,11 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                 className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <span>查看全部台账</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
             <p className="text-xs text-[#64748B]">
-              自动筛选「超预算 / 消耗率超进度10%」或「账期逾60天」项目，点击可穿透核查明细
+              自动筛选「超预算 / 消耗率超进度10%」或「账期逾60天」项目，点击卡片即可穿透核查明细
             </p>
           </div>
 
@@ -873,9 +993,11 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
               alertProjects.map((p) => {
                 const isOverrun = p.metrics.healthStatus === '超支';
                 return (
-                  <div
+                  <button
                     key={p.id}
-                    className="rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 hover:border-[#2563EB]/60 transition-colors"
+                    type="button"
+                    onClick={() => onInspectProject(p.id)}
+                    className="group w-full text-left rounded-xl border border-slate-200/90 bg-white px-4 py-3.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 hover:border-[#2563EB]/60 hover:bg-[#F8FAFC]/80 transition-all cursor-pointer"
                   >
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -888,7 +1010,7 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                         >
                           {isOverrun ? '超支预警' : '回款滞后'}
                         </span>
-                        <span className="text-sm font-semibold text-[#0F172A] truncate">
+                        <span className="text-sm font-semibold text-[#0F172A] truncate group-hover:text-[#2563EB] transition-colors">
                           {p.name}
                         </span>
                         <span className="text-xs text-[#64748B] whitespace-nowrap">
@@ -900,15 +1022,14 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => onInspectProject(p.id)}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
-                    >
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] group-hover:text-[#1D4ED8] whitespace-nowrap shrink-0">
                       <span>穿透核查</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                      <ArrowRight
+                        className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </button>
                 );
               })
             )}
@@ -921,6 +1042,7 @@ export const ExecutiveCockpit: React.FC<ExecutiveCockpitProps> = ({
         trendConfig={activeTrendConfig}
         projectCount={summary.projectCount}
         onSelectMetric={setActiveTrendMetric}
+        onQuickNavigate={onNavigateTab}
         onClose={() => setActiveTrendMetric(null)}
       />
     </div>
